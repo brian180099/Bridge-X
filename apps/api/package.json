@@ -7,7 +7,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
-    "test": "vitest run test/analyzer.test.ts"
+    "test": "vitest run"
   },
   "dependencies": {
     "cors": "^2.8.5",
