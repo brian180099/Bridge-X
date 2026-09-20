@@ -5,6 +5,7 @@ import { analyzeWithOptionalAI } from "./ai.js";
 import { analyzeDeterministically } from "./analyzer.js";
 import { sampleRequest } from "./sample.js";
 import { analyzeRequestSchema } from "./types.js";
+import { analyzeMeeting, transcribeAudio, meetingError } from './meetings.js';
 
 export const app = express();
 
@@ -14,7 +15,15 @@ app.use(
     origin: process.env.WEB_ORIGIN?.split(",").map((origin) => origin.trim()) ?? ["http://localhost:5173"],
   }),
 );
-app.use(express.json({ limit: "64kb" }));
+app.use(express.json({ limit: "256kb" }));
+app.post('/api/meeting-analyze', async (request, response) => {
+  try { response.json(await analyzeMeeting(request.body)); }
+  catch (error) { const failure = meetingError(error); response.status(failure.status).json(failure); }
+});
+app.post('/api/transcribe', express.raw({ type: 'audio/*', limit: '4mb' }), async (request, response) => {
+  try { response.json(await transcribeAudio(request.body, request.headers['content-type'] || '')); }
+  catch (error) { const failure = meetingError(error); response.status(failure.status).json(failure); }
+});
 
 app.get("/api/health", (_request, response) => {
   const provider = (process.env.LLM_PROVIDER ?? "openai").trim().toLowerCase();

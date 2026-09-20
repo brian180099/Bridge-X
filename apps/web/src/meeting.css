@@ -1,0 +1,460 @@
+.meeting-shell {
+  display: grid;
+  grid-template-columns: 228px minmax(0, 1fr);
+  min-height: 100vh;
+  font-size: 15px;
+  line-height: 1.7;
+}
+.meeting-shell > aside {
+  background: #16352d;
+  color: #e6f1eb;
+  padding: 32px 24px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.meeting-brand {
+  font:
+    800 28px Manrope,
+    sans-serif;
+  letter-spacing: -1px;
+}
+.meeting-brand b {
+  color: #c9ff53;
+}
+.meeting-shell > aside .muted {
+  color: #a9c2b6;
+  font-size: 12px;
+}
+.meeting-shell > aside nav {
+  display: grid;
+  gap: 8px;
+  margin-top: 36px;
+}
+.meeting-shell > aside nav a {
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+.meeting-shell > aside nav a.active {
+  background: #2d5044;
+  color: #ddffac;
+}
+.meeting-shell > aside > small {
+  margin-top: auto;
+  color: #b8cbc2;
+}
+.meeting-shell > main {
+  width: min(1080px, 100%);
+  margin: auto;
+  padding: 48px 44px;
+  align-self: start;
+}
+.meeting-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 30px;
+}
+.meeting-heading h1 {
+  font-size: 36px;
+  line-height: 1.3;
+  letter-spacing: -1.3px;
+  margin: 0 0 12px;
+}
+.meeting-heading p {
+  margin: 0;
+  color: #596e63;
+  max-width: 680px;
+}
+.meeting-heading > .button {
+  flex-shrink: 0;
+}
+.meeting-shell .button {
+  font-size: 14px;
+  min-height: 46px;
+}
+.meeting-shell .button.primary {
+  background: #1f5940;
+  border-color: #1f5940;
+}
+.meeting-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 26px 0 38px;
+}
+.meeting-stats > div {
+  background: #e8efe8;
+  padding: 24px;
+  border-radius: 14px;
+  color: #4c6456;
+}
+.meeting-stats b {
+  display: block;
+  color: #203e2c;
+  font: 800 30px Manrope;
+  margin-bottom: 6px;
+}
+.meeting-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 18px 0;
+}
+.meeting-toolbar h2 {
+  margin-right: auto;
+}
+.meeting-shell h2 {
+  font-size: 20px;
+  letter-spacing: -0.5px;
+  margin: 0 0 14px;
+}
+.meeting-shell p {
+  overflow-wrap: anywhere;
+}
+.meeting-shell input:not([type="checkbox"]):not([type="file"]),
+.meeting-shell textarea,
+.meeting-shell select {
+  font: inherit;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #cbd7ce;
+  border-radius: 9px;
+  background: #fff;
+  color: #213c2c;
+  min-height: 46px;
+}
+.meeting-shell textarea {
+  resize: vertical;
+  line-height: 1.8;
+}
+.meeting-shell input:focus,
+.meeting-shell textarea:focus,
+.meeting-shell select:focus {
+  outline: 3px solid #c7e2ce;
+  outline-offset: 1px;
+}
+.meeting-toolbar > input,
+.meeting-toolbar > select {
+  width: auto !important;
+  max-width: 100%;
+}
+.meeting-panel {
+  margin: 18px 0;
+  padding: 28px;
+  border: 1px solid #dbe4dc;
+  border-radius: 16px;
+  background: #fff;
+  min-width: 0;
+}
+fieldset.meeting-panel {
+  min-inline-size: 0;
+}
+.meeting-form label,
+.task-card label:not(.meeting-check) {
+  display: block;
+  font-weight: 600;
+  margin: 14px 0;
+}
+.meeting-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+.meeting-fields label {
+  min-width: 0;
+}
+.meeting-form input,
+.meeting-form textarea,
+.task-card input,
+.task-card textarea,
+.task-card select {
+  margin-top: 7px;
+  font-weight: 400 !important;
+}
+.muted {
+  color: #607168;
+  font-size: 14px;
+}
+.meeting-empty {
+  padding: 48px 28px;
+  text-align: center;
+  background: #fff;
+  border: 1px dashed #b9cbbd;
+  border-radius: 16px;
+}
+.meeting-empty p {
+  color: #63756a;
+}
+.meeting-list {
+  display: grid;
+  gap: 12px;
+}
+.meeting-list > a {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 22px;
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #dce4dd;
+  border-radius: 14px;
+}
+.meeting-list > a:hover {
+  border-color: #78a28a;
+}
+.meeting-list h2 {
+  margin: 8px 0;
+}
+.meeting-list p {
+  margin: 0;
+  color: #627168;
+}
+.meeting-list small {
+  color: #657b6c;
+}
+.meeting-list > a > span {
+  flex-shrink: 0;
+  font-size: 13px;
+}
+.meeting-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.meeting-check input {
+  accent-color: #286746;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin: 0;
+}
+.upload-label {
+  position: relative;
+  overflow: hidden;
+}
+.upload-label input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.upload-label:has(input:disabled) {
+  opacity: 0.45;
+}
+.audio-preview {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 18px;
+  background: #f0f5ee;
+  border-radius: 12px;
+}
+.audio-preview audio {
+  max-width: 100%;
+}
+.meeting-submit {
+  position: sticky;
+  bottom: 12px;
+  background: #fff;
+  border: 1px solid #c9d9cd;
+  box-shadow: 0 6px 28px #12321e15;
+  border-radius: 14px;
+  padding: 16px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.meeting-submit p {
+  font-size: 13px;
+  color: #647469;
+  margin: 0;
+}
+.meeting-alert {
+  padding: 16px;
+  background: #fff0e9;
+  border: 1px solid #e1b7a3;
+  border-radius: 10px;
+  color: #883c22;
+}
+.meeting-tabs {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid #d1ddd4;
+  overflow-x: auto;
+  margin-bottom: 24px;
+}
+.meeting-tabs button {
+  white-space: nowrap;
+  padding: 14px 18px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: #607469;
+  font-size: 15px;
+  font-weight: 600;
+}
+.meeting-tabs button.active {
+  color: #185a35;
+  border-color: #236944;
+}
+.meeting-tabs small {
+  margin-left: 7px;
+}
+.task-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #647469;
+  font-size: 13px;
+}
+.task-state {
+  margin-left: auto;
+}
+.priority {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 700;
+  background: #e9eef5;
+  color: #415976;
+}
+.priority.P1 {
+  background: #fff0e3;
+  color: #99520b;
+}
+.priority.P2 {
+  background: #e8f1e5;
+  color: #46733b;
+}
+.task-card p {
+  font-size: 14px;
+  color: #5c6c62;
+}
+.task-card p b {
+  color: #283f30;
+}
+.task-card details {
+  margin-top: 18px;
+  font-size: 14px;
+}
+.task-card summary {
+  cursor: pointer;
+  color: #266a43;
+}
+.task-card blockquote {
+  margin: 12px 0;
+  padding: 16px;
+  background: #f3f6f1;
+  border-radius: 10px;
+}
+.meeting-question {
+  padding: 16px;
+  background: #eef5e9;
+  border-radius: 10px;
+  color: #3a5c36;
+}
+.prewrap {
+  white-space: pre-wrap;
+  line-height: 1.9;
+}
+.meeting-shell button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+@media (max-width: 850px) {
+  .meeting-shell {
+    grid-template-columns: 1fr;
+  }
+  .meeting-shell > aside {
+    position: static;
+    height: auto;
+    padding: 18px 24px;
+  }
+  .meeting-shell > aside > small,
+  .meeting-shell > aside > .muted {
+    display: none;
+  }
+  .meeting-shell > aside nav {
+    display: flex;
+    overflow-x: auto;
+    margin-top: 14px;
+    gap: 6px;
+  }
+  .meeting-shell > aside nav a {
+    white-space: nowrap;
+    padding: 9px;
+  }
+  .meeting-shell > main {
+    padding: 28px 20px;
+  }
+  .meeting-heading h1 {
+    font-size: 30px;
+  }
+  .meeting-heading {
+    align-items: start;
+  }
+  .meeting-stats {
+    gap: 8px;
+  }
+  .meeting-stats > div {
+    padding: 18px 12px;
+    font-size: 12px;
+  }
+  .meeting-panel {
+    padding: 22px;
+  }
+  .meeting-list > a {
+    display: block;
+  }
+  .meeting-list > a > span {
+    display: block;
+    margin-top: 12px;
+  }
+  .meeting-submit {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .meeting-heading > .button {
+    font-size: 12px;
+  }
+  .meeting-tabs button {
+    padding: 12px;
+    font-size: 13px;
+  }
+}
+@media (max-width: 500px) {
+  .meeting-heading {
+    display: block;
+  }
+  .meeting-heading > .button {
+    margin-top: 16px;
+  }
+  .meeting-fields {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .meeting-panel {
+    padding: 18px;
+  }
+  .meeting-shell > main {
+    padding: 24px 14px;
+  }
+  .task-top {
+    flex-wrap: wrap;
+  }
+  .task-state {
+    margin-left: 0;
+  }
+}
