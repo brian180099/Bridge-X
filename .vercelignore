@@ -1,0 +1,9 @@
+.env
+.env.*
+.git
+.vscode
+node_modules
+apps/api/dist
+apps/web/dist
+coverage
+*.log

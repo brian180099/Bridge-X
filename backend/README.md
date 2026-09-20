@@ -1,42 +1,11 @@
-# Bridge-X Backend
+# Bridge X Backend
 
-에이전트 실행과 연결 자체보다 **역할 간 핸드오프 품질, 충돌 탐지, 검증 가능한 실행 기록**을 담당합니다.
+실제 백엔드는 [`apps/api`](../apps/api), Vercel 진입점은 [`api`](../api)에 있습니다.
 
-## MVP 책임
+- Express + TypeScript + Zod
+- `POST /api/analyze`: Meaning Diff, Role Lens, Shared Contract, Receipt 생성
+- OpenAI Responses API Structured Outputs 선택 연동
+- 키가 없거나 호출이 실패해도 같은 응답 계약을 유지하는 데모 엔진
+- API 키는 서버 환경변수에서만 읽고 브라우저 응답에 포함하지 않음
 
-- 워크스페이스·작업·실행 세션 관리
-- 역할별 에이전트 및 외부 모델 어댑터
-- 병렬 실행과 제한된 순차 실행
-- `Context Handoff` 정규화·검증
-- 근거, 가정, 제약, 완료 기준의 누락 탐지
-- 역할 간 주장·요구사항 충돌 비교
-- 사람 승인 게이트
-- 실행 이력, 비용, 오류, 산출물 추적
-
-## Context Handoff 초안
-
-```json
-{
-  "from_role": "research",
-  "to_role": "product",
-  "objective": "검증할 업무 목적",
-  "deliverable": "전달하는 산출물",
-  "evidence": [
-    {
-      "claim": "주장",
-      "source": "출처",
-      "confidence": 0.0
-    }
-  ],
-  "facts": [],
-  "assumptions": [],
-  "constraints": [],
-  "open_questions": [],
-  "acceptance_criteria": [],
-  "human_decisions": []
-}
-```
-
-## 기술 방향 — 미확정
-
-초기에는 단일 오케스트레이터와 명시적인 상태 모델로 시작하고, 복잡한 자율 에이전트 네트워크는 검증 이후에 확장합니다. 기존 BridgeNote의 Spring 기반 API와 FastAPI AI 계층 경험은 참고하되 Bridge-X 요구사항에 맞춰 다시 결정합니다.
+환경변수와 검증 방법은 [루트 README](../README.md)를 확인하세요.
