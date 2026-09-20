@@ -13,7 +13,8 @@
     "vite": "^7.1.4",
     "typescript": "^5.9.2",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "react-router-dom": "^7.9.1"
   },
   "devDependencies": {
     "@types/react": "^19.1.12",
