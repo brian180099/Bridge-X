@@ -6,7 +6,8 @@ const audio = await client.audio.speech.create({
   input:'This is a test meeting. Alex will prepare the design. Sam will review the payment API. The deadline is not decided.',
   response_format:'mp3',
 });
-const result=await fetch('http://127.0.0.1:8787/api/transcribe',{
+const baseUrl = process.argv[2] || 'http://127.0.0.1:8787';
+const result=await fetch(baseUrl + '/api/transcribe',{
   method:'POST',headers:{'Content-Type':'audio/mpeg'},body:await audio.arrayBuffer(),
 });
 const body=await result.json();
