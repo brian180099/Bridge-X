@@ -1,43 +1,56 @@
 # Bridge X
 
-> 말을 번역하는 것을 넘어, **일이 전달되는 방식을 번역합니다.**
+> 회의가 끝나는 순간, 서로 다르게 이해한 말을 함께 실행할 수 있는 일로 바꿉니다.
 
-Bridge X는 사람·직무·AI 에이전트 사이에서 일이 넘어갈 때 생기는 의미 손실을 실행 전에 발견하는 **Agent Handoff & Context Coordination** 플랫폼입니다. 단순 번역이나 에이전트 연결 대신 `sender intent ≠ receiver interpretation`을 비교하고, 팀이 실제로 합의해야 할 Shared Contract와 Receiver Receipt를 만듭니다.
+Bridge X는 회의 음성을 기록·전사하고, 결정과 할 일을 직무별로 구조화하며, 오해가 생길 수 있는 표현과 도메인 용어를 원문 근거와 함께 보여주는 **회의 실행 정렬(Execution Alignment) 워크스페이스**입니다.
 
-![Bridge X Spec Preflight](./docs/preview.png)
+**배포 서비스:** [https://bridge-x-omega.vercel.app](https://bridge-x-omega.vercel.app)
 
-## 제품 방향
+![Bridge X 회의 작업 공간](./docs/preview.png)
 
-```text
-현재 MVP                       확장 플랫폼
-Spec Preflight                AI Product War Room
-업무 요청의 의미를 사전 검수  여러 에이전트의 근거·제약·결정을 연결
-        └──── 공통 기반: Context Handoff Protocol ────┘
-```
+## 해결하려는 문제
 
-현재 구현은 모든 AI 에이전트를 만드는 범용 빌더가 아닙니다. 먼저 가장 빈번하고 검증하기 쉬운 **업무 요청의 handoff 순간**을 해결합니다. 이후 같은 Context Handoff 계약을 에이전트 간 산출물, Slack·Notion·Jira·GitHub의 인수인계 지점으로 확장합니다.
+회의록이나 요약 도구는 ‘무슨 말을 했는지’를 남기지만, 실제 협업 실패는 그다음에 발생합니다.
 
-## 지금 구현된 프로토타입
+- PM·디자인·개발·운영이 같은 표현을 서로 다른 완료 조건으로 이해합니다.
+- “빠르게”, “우선”, “가능하면” 같은 말은 담당자·기한·우선순위가 없는 채 실행으로 넘어갑니다.
+- 문화권과 직무별 용어 차이가 번역 이후에도 남습니다.
+- 회의 결과를 다시 캘린더나 업무 문서로 옮기는 과정에서 맥락과 근거가 사라집니다.
 
-- 원본 업무 요청, 미션, 송신·수신 역할, 비협상 제약 입력
-- 직무별 Role Lens를 통한 서로 다른 실행 해석 시뮬레이션
-- 성공 기준·범위·제약·완료 조건의 `Meaning Diff` 탐지
-- Go / Revise / Stop 판정과 Alignment·Readiness·Semantic Risk 점수
-- 실행 가능한 `Shared Contract`와 미결정 사항 `Decision Ledger` 생성
-- 각 수신 역할의 이해·납품물·부족한 정보가 담긴 `Receiver Receipt`
-- OpenAI API 키가 없을 때도 동작하는 로컬 데모 엔진
-- API 키가 있으면 OpenAI Responses API의 Structured Outputs를 사용하는 AI 분석
+Bridge X는 단순 요약이 아니라 **말 → 근거가 있는 실행 항목 → 사람이 검토한 합의**의 흐름을 만듭니다.
 
-### 분석 모드 구분
+## 현재 구현된 사용자 흐름
 
-| 모드 | Meaning Diff | 용도 |
-|---|---|---|
-| 체험·데모 | 성공 기준·범위·제약·완료 조건의 표준 4유형 | API 키 없이 안정적인 시연 |
-| 실제 AI | 문맥에 따라 이름과 개수가 달라지는 2~8건 | 실제 요청의 도메인·직무별 의미 분석 |
+1. `새 회의`에서 회의명과 참석 직무를 설정합니다.
+2. 브라우저에서 녹음하거나 음성 파일을 선택하고, 동의 확인 후 AI로 전사합니다.
+3. 사용자가 전사문을 직접 확인·수정합니다.
+4. AI가 요약, 결정사항, 직무별 할 일, 확인할 표현, 용어 가이드를 생성합니다.
+5. 각 할 일의 담당자·기한·우선순위·완료 조건을 사람이 수정하고 `검토 완료`로 확정합니다.
+6. Notion용 Markdown 또는 캘린더용 ICS 파일로 내보냅니다.
 
-화면의 결과 메타 정보에도 `체험 분석` 또는 `AI 맞춤 분석`과 탐지 건수가 표시됩니다. 따라서 데모의 4유형은 제품 전체의 고정 분류 체계가 아니라, 키 없이 체험할 수 있는 기준 분석 세트입니다.
+## 핵심 기능
 
-## 3분 안에 실행하기
+- 마이크 녹음 및 오디오 파일 전사
+- 회의 전사문 편집과 세션 임시 저장
+- 담당 직무, P1/P2/P3 우선순위, 기한, 선행 조건, 완료 기준이 포함된 할 일 추출
+- 모호하거나 오해 가능성이 있는 표현과 정확한 원문 인용 표시
+- 직무·도메인 용어의 의미와 확인 질문 제안
+- AI 생성 상태와 사용자 검토 완료 상태의 명확한 구분
+- 회의별 상세 탭과 전체 할 일 모아보기
+- Markdown 및 ICS 파일 내보내기
+- 모바일·데스크톱 반응형 UI
+
+## AI 활용
+
+- **OpenAI 음성 전사 모델:** 회의 음성을 텍스트로 변환합니다.
+- **OpenAI Responses API + Structured Outputs:** 결과를 고정된 데이터 구조로 생성합니다.
+- **Zod 검증:** 서버에서 AI 출력 형식을 다시 검증합니다.
+- **근거 우선 설계:** 할 일과 위험 표현에는 전사문의 실제 인용문을 연결합니다.
+- **Human-in-the-loop:** AI 결과는 초안이며, 사용자가 담당자·기한·완료 조건을 검토해야 확정됩니다.
+
+API 키는 서버 환경변수로만 사용하며 브라우저에 전달하지 않습니다. `.env`는 Git에서 제외됩니다.
+
+## 빠른 실행
 
 필요 환경: Node.js 20 이상
 
@@ -50,66 +63,44 @@ npm run dev
 - Web: http://localhost:5173
 - API health: http://localhost:8787/api/health
 
-`.env`의 `OPENAI_API_KEY`가 비어 있으면 데모 분석 엔진이 사용됩니다. 실제 AI Role Lens를 사용하려면 키를 넣고 `AI_MODE=auto`로 두세요. 키는 브라우저에 전달되지 않고 API 서버에서만 사용합니다.
+`.env`에 `OPENAI_API_KEY` 또는 `LLM_API_KEY`를 설정하면 실제 전사와 AI 분석을 사용할 수 있습니다.
 
-팀 공유 환경변수 형식인 `LLM_PROVIDER=openai`, `LLM_API_KEY`, `LLM_MODEL`도 지원합니다. 실제 키가 담긴 `.env`는 Git과 Vercel 업로드 대상에서 제외됩니다.
-
-## Vercel 배포
-
-저장소 루트에서 Vercel 프로젝트를 연결한 뒤 Production 환경변수에 `LLM_PROVIDER`, `LLM_API_KEY`, `LLM_MODEL`을 등록하고 배포합니다.
+## 주요 명령어
 
 ```bash
-vercel
-vercel --prod
+npm run dev       # Web + API 실행
+npm run build     # production build
+npm test          # API와 분석 로직 테스트
 ```
 
-프론트엔드는 `public/`로 빌드되고, 루트 `api/`의 엔드포인트가 Vercel Function으로 배포됩니다. 심사 기간에는 배포 URL과 `/api/health`를 함께 확인하세요.
+## 기술 구성
 
-## VS Code에서 작업하기
-
-1. VS Code에서 이 저장소 폴더를 엽니다.
-2. 추천 확장을 설치합니다.
-3. `Ctrl+Shift+B`를 누르고 **Bridge X: 전체 개발 서버**를 실행합니다.
-4. 디버깅 패널에서 **Bridge X Web + API**를 선택하면 두 앱을 함께 디버깅할 수 있습니다.
+- Frontend: React, TypeScript, Vite
+- Backend: Node.js, Express, TypeScript, Zod
+- AI: OpenAI Responses API Structured Outputs, OpenAI Speech-to-Text
+- Deployment: Vercel Functions + Vercel Hosting
+- Persistence: 브라우저 localStorage 기반 프로토타입
 
 ## 프로젝트 구조
 
 ```text
-.
-├─ apps/
-│  ├─ web/                 # React + Vite + TypeScript
-│  └─ api/                 # Express + TypeScript + OpenAI optional
-├─ api/                    # Vercel Functions 진입점
-├─ vercel.json             # Vercel build 설정
-├─ docs/
-│  ├─ SERVICE_PLAN.md      # 서비스 기획안과 시장 포지셔닝
-│  ├─ SUBMISSION_BRIEF.md  # 공모전 폼에 붙여 넣을 제출 문안
-│  ├─ AI_TECH_STRATEGY.md  # 문제-솔루션-AI 선택-기술 구현 근거
-│  ├─ ARCHITECTURE.md      # 시스템 구조와 API 계약
-│  └─ DEMO_SCRIPT.md       # 3분 발표·시연 순서
-└─ .vscode/                # VS Code task / debug 설정
+apps/web/                  React 사용자 화면
+apps/api/                  분석·전사 로직과 Express API
+api/                       Vercel Functions 진입점
+docs/MEETING-IMPLEMENTATION.md
+                            구현 범위와 한계
+docs/SUBMISSION_BRIEF.md   공모전 제출용 문안
+docs/DEMO_SCRIPT.md        3분 발표·시연 순서
+docs/SUBMISSION_CHECKLIST.md
+                            제출 직전 확인표
 ```
 
-## 명령어
+## 현재 범위와 한계
 
-```bash
-npm run dev       # Web + API 동시 실행
-npm run dev:web   # 프론트엔드만 실행
-npm run dev:api   # 백엔드만 실행
-npm run build     # 전체 production build
-npm test          # API·분석 엔진 테스트
-```
+현재 버전은 심사와 사용자 검증을 위한 웹 프로토타입입니다. 회의와 할 일은 해당 브라우저에 저장되며, 팀 계정·서버 DB·실시간 공동 편집은 아직 없습니다. Notion과 캘린더는 OAuth 직접 연동이 아니라 Markdown/ICS 파일 내보내기 방식입니다. 문화적 해석은 확정 판단이 아니라 오해 가능성과 확인 질문을 제안하는 보조 정보로 다룹니다.
 
-## 제품의 명확한 경계
+다음 단계는 팀 계정과 서버 저장, 실제 Notion·Google Calendar 연동, 조직별 용어집, 발화자 분리, 사용자 평가 데이터 기반 품질 개선입니다.
 
-Bridge X는 또 하나의 범용 멀티에이전트 빌더가 아닙니다. 다른 플랫폼이 “누가 무엇을 실행할지” 연결한다면, Bridge X는 실행 전에 **“보낸 사람·받는 사람·다음 에이전트가 같은 목표와 제약을 이해했는지”** 검증하는 품질 게이트입니다. 첫 진입 제품은 기획서·업무 요청을 검수하는 **Spec Preflight**이며, 검증된 계약을 기반으로 **AI Product War Room**까지 확장합니다.
+## 제품의 방향
 
-## 다음 단계
-
-- 팀·프로젝트 로그인과 PostgreSQL 기반 히스토리
-- 조직별 용어집, 결정 기록, 역할별 도메인 팩
-- Slack / Notion / Jira / GitHub PR 연동
-- 실제 수신자가 수정·서명하는 Receiver Receipt
-- 재작업률, 승인 리드타임, 의미 충돌 회피 비용 측정
-
-상세한 우선순위와 사업 가설은 [서비스 기획안](./docs/SERVICE_PLAN.md), AI 선택과 구현 근거는 [AI 기술 전략](./docs/AI_TECH_STRATEGY.md)을 확인하세요.
+Bridge X가 만들려는 것은 범용 회의 요약기나 번역기가 아닙니다. 핵심은 **서로 다른 직무와 문화권의 사람들이 같은 회의를 실제로 같은 방향으로 실행하도록 돕는 협업 운영 계층**입니다. 회의에서 시작해 문서, 메신저, 업무 관리 도구로 확장하되, 모든 결과에 원문 근거와 사람의 검토 상태를 남기는 것이 제품 원칙입니다.
