@@ -48,7 +48,7 @@ export function calendarFile(meeting: Meeting) {
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Bridge X//Meetings//KO",
+    "PRODID:-//Operation AI//Meetings//KO",
     "CALSCALE:GREGORIAN",
   ];
   meeting.tasks.forEach((task, index) => {
@@ -58,7 +58,7 @@ export function calendarFile(meeting: Meeting) {
     date.setUTCDate(date.getUTCDate() + 1);
     lines.push(
       "BEGIN:VEVENT",
-      "UID:" + meeting.id + "-" + index + "@bridge-x",
+      "UID:" + meeting.id + "-" + index + "@operation-ai",
       "DTSTAMP:" +
         new Date()
           .toISOString()

@@ -33,7 +33,7 @@ app.get("/api/health", (_request, response) => {
   const hasApiKey = Boolean(process.env.OPENAI_API_KEY?.trim() ?? process.env.LLM_API_KEY?.trim());
   response.json({
     status: "ok",
-    service: "bridge-x-api",
+    service: "operation-ai-api",
     aiMode: provider === "openai" && hasApiKey ? "available" : "demo",
     provider,
     timestamp: new Date().toISOString(),

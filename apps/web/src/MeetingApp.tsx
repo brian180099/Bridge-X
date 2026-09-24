@@ -61,7 +61,7 @@ export default function MeetingApp() {
       <div className="meeting-shell">
         <aside>
           <Link className="meeting-brand" to="/">
-            Bridge <b>X</b>
+            Operation <b>AI</b>
           </Link>
           <p className="muted">회의의 맥락을 실행으로</p>
           <nav>
@@ -785,7 +785,7 @@ function ExportPanel({ meeting: m }: { meeting: Meeting }) {
           onClick={() =>
             download(
               calendarFile(m),
-              "bridge-x.ics",
+              "operation-ai.ics",
               "text/calendar;charset=utf-8",
             )
           }
@@ -798,7 +798,7 @@ function ExportPanel({ meeting: m }: { meeting: Meeting }) {
           onClick={() =>
             download(
               markdownFile(m),
-              "bridge-x.md",
+              "operation-ai.md",
               "text/markdown;charset=utf-8",
             )
           }

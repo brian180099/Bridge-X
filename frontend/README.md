@@ -1,4 +1,4 @@
-# Bridge X Frontend
+# Operation AI Frontend
 
 실제 프론트엔드는 [`apps/web`](../apps/web)에 있습니다.
 

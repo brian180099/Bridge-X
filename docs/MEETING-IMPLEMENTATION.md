@@ -1,4 +1,4 @@
-# Bridge X 회의 서비스 개발 현황
+# Operation AI Evidence Capture 개발 현황
 
 ## 이번 구현
 - [x] 회의 중심 홈, 회의 검색, 모든 할 일 화면

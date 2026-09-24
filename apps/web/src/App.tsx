@@ -1,43 +1,1233 @@
 import { useMemo, useState } from "react";
-import { BrowserRouter, Link, NavLink, Navigate, Outlet, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import {
+  BrowserRouter,
+  Link,
+  NavLink,
+  Navigate,
+  Outlet,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { sampleRequest } from "./data";
 import type { AnalyzeRequest, AnalyzeResponse, Severity } from "./types";
-import { categoryKey, categoryMeta, formatDate, loadRecords, saveRecords, type CategoryKey, type WorkspaceRecord } from "./workspace";
+import {
+  categoryKey,
+  categoryMeta,
+  formatDate,
+  loadRecords,
+  saveRecords,
+  type CategoryKey,
+  type WorkspaceRecord,
+} from "./workspace";
 
-const roles = ["Product Manager", "UX Designer", "Frontend Engineer", "Backend Engineer", "Risk & Compliance", "Marketing", "Sales", "Operations"];
-const roleKo: Record<string, string> = { "Product Manager": "프로덕트 매니저", "UX Designer": "UX 디자이너", "Frontend Engineer": "프론트엔드 개발", "Backend Engineer": "백엔드 개발", "Risk & Compliance": "리스크·컴플라이언스", Marketing: "마케팅", Sales: "영업", Operations: "운영" };
-const verdictKo = { GO: "업무 시작 가능", REVISE: "보완 후 시작", STOP: "합의 전 시작 금지" } as const;
-const severityKo: Record<Severity, string> = { critical: "치명적", high: "높음", medium: "보통", low: "낮음" };
+const roles = [
+  "Product Manager",
+  "UX Designer",
+  "Frontend Engineer",
+  "Backend Engineer",
+  "Risk & Compliance",
+  "Marketing",
+  "Sales",
+  "Operations",
+];
+const roleKo: Record<string, string> = {
+  "Product Manager": "프로덕트 매니저",
+  "UX Designer": "UX 디자이너",
+  "Frontend Engineer": "프론트엔드 개발",
+  "Backend Engineer": "백엔드 개발",
+  "Risk & Compliance": "리스크·컴플라이언스",
+  Marketing: "마케팅",
+  Sales: "영업",
+  Operations: "운영",
+};
+const verdictKo = {
+  GO: "업무 시작 가능",
+  REVISE: "보완 후 시작",
+  STOP: "합의 전 시작 금지",
+} as const;
+const severityKo: Record<Severity, string> = {
+  critical: "치명적",
+  high: "높음",
+  medium: "보통",
+  low: "낮음",
+};
 const roleName = (value: string) => roleKo[value] ?? value;
 
 function App() {
   const [records, setRecords] = useState<WorkspaceRecord[]>(loadRecords);
-  const update = (next: WorkspaceRecord[]) => { setRecords(next); saveRecords(next); };
-  const addRecord = (request: AnalyzeRequest, analysis: AnalyzeResponse) => {
-    const record = { id: analysis.analysisId, createdAt: analysis.generatedAt, request, analysis, confirmedRoles: [], confirmedDecisions: [] };
-    update([record, ...records.filter((item) => item.id !== record.id)]); return record;
+  const update = (next: WorkspaceRecord[]) => {
+    setRecords(next);
+    saveRecords(next);
   };
-  const patchRecord = (id: string, patch: Partial<WorkspaceRecord>) => update(records.map((item) => item.id === id ? { ...item, ...patch } : item));
-  return <BrowserRouter><Routes><Route element={<Shell records={records}/>}><Route index element={<Home records={records}/>}/><Route path="preflight/new" element={<NewPreflight onComplete={addRecord}/>}/><Route path="preflight/:id" element={<Analysis records={records}/>}/><Route path="preflight/:id/agreement" element={<Agreement records={records} patchRecord={patchRecord}/>}/><Route path="preflight/:id/receipts" element={<Receipts records={records} patchRecord={patchRecord}/>}/><Route path="history" element={<History records={records}/>}/><Route path="guide" element={<Guide/>}/><Route path="*" element={<Navigate to="/" replace/>}/></Route></Routes></BrowserRouter>;
+  const addRecord = (request: AnalyzeRequest, analysis: AnalyzeResponse) => {
+    const record = {
+      id: analysis.analysisId,
+      createdAt: analysis.generatedAt,
+      request,
+      analysis,
+      confirmedRoles: [],
+      confirmedDecisions: [],
+    };
+    update([record, ...records.filter((item) => item.id !== record.id)]);
+    return record;
+  };
+  const patchRecord = (id: string, patch: Partial<WorkspaceRecord>) =>
+    update(
+      records.map((item) => (item.id === id ? { ...item, ...patch } : item)),
+    );
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route element={<Shell records={records} />}>
+          <Route index element={<Home records={records} />} />
+          <Route
+            path="preflight/new"
+            element={<NewPreflight onComplete={addRecord} />}
+          />
+          <Route
+            path="preflight/:id"
+            element={<Analysis records={records} />}
+          />
+          <Route
+            path="preflight/:id/agreement"
+            element={<Agreement records={records} patchRecord={patchRecord} />}
+          />
+          <Route
+            path="preflight/:id/receipts"
+            element={<Receipts records={records} patchRecord={patchRecord} />}
+          />
+          <Route path="history" element={<History records={records} />} />
+          <Route path="guide" element={<Guide />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-function Shell({records}:{records:WorkspaceRecord[]}) { const location=useLocation(); return <div className="app-shell"><aside className="side-nav"><Link className="brand" to="/"><span className="brand-mark">BX</span><span><b>Bridge X</b><small>Meaning Operations</small></span></Link><nav><NavLink to="/" end><span>⌂</span>업무 홈</NavLink><NavLink to="/preflight/new"><span>＋</span>새 업무 검사</NavLink><NavLink to="/history"><span>▤</span>분석 기록 <em>{records.length}</em></NavLink><NavLink to="/guide"><span>?</span>사용 가이드</NavLink></nav><div className="side-help"><b>Bridge X는 번역기가 아닙니다.</b><p>직무 사이의 해석 차이를 실행 가능한 합의로 바꾸는 업무 협업 도구입니다.</p></div></aside><main className="main-area"><header className="topbar"><div><span className="mobile-brand">Bridge X</span><span className="crumb">{pageTitle(location.pathname)}</span></div><Link className="top-action" to="/preflight/new">새 검사 시작</Link></header><Outlet/></main><nav className="mobile-nav"><NavLink to="/" end>홈</NavLink><NavLink to="/preflight/new">새 검사</NavLink><NavLink to="/history">기록</NavLink><NavLink to="/guide">가이드</NavLink></nav></div>; }
-function pageTitle(path:string){if(path.includes("agreement"))return"실행 합의";if(path.includes("receipts"))return"담당자 확인";if(path==="/preflight/new")return"새 업무 검사";if(path.startsWith("/preflight/"))return"의미 충돌 분석";if(path==="/history")return"분석 기록";if(path==="/guide")return"사용 가이드";return"업무 홈";}
+function Shell({ records }: { records: WorkspaceRecord[] }) {
+  const location = useLocation();
+  return (
+    <div className="app-shell">
+      <aside className="side-nav">
+        <Link className="brand" to="/">
+          <span className="brand-mark">OA</span>
+          <span>
+            <b>Operation AI</b>
+            <small>Agent Operations</small>
+          </span>
+        </Link>
+        <nav>
+          <NavLink to="/" end>
+            <span>⌂</span>업무 홈
+          </NavLink>
+          <NavLink to="/preflight/new">
+            <span>＋</span>새 업무 검사
+          </NavLink>
+          <NavLink to="/history">
+            <span>▤</span>분석 기록 <em>{records.length}</em>
+          </NavLink>
+          <NavLink to="/guide">
+            <span>?</span>사용 가이드
+          </NavLink>
+        </nav>
+        <div className="side-help">
+          <b>Operation AI는 번역기가 아닙니다.</b>
+          <p>
+            직무 사이의 해석 차이를 실행 가능한 합의로 바꾸는 업무 협업
+            도구입니다.
+          </p>
+        </div>
+      </aside>
+      <main className="main-area">
+        <header className="topbar">
+          <div>
+            <span className="mobile-brand">Operation AI</span>
+            <span className="crumb">{pageTitle(location.pathname)}</span>
+          </div>
+          <Link className="top-action" to="/preflight/new">
+            새 검사 시작
+          </Link>
+        </header>
+        <Outlet />
+      </main>
+      <nav className="mobile-nav">
+        <NavLink to="/" end>
+          홈
+        </NavLink>
+        <NavLink to="/preflight/new">새 검사</NavLink>
+        <NavLink to="/history">기록</NavLink>
+        <NavLink to="/guide">가이드</NavLink>
+      </nav>
+    </div>
+  );
+}
+function pageTitle(path: string) {
+  if (path.includes("agreement")) return "실행 합의";
+  if (path.includes("receipts")) return "담당자 확인";
+  if (path === "/preflight/new") return "새 업무 검사";
+  if (path.startsWith("/preflight/")) return "의미 충돌 분석";
+  if (path === "/history") return "분석 기록";
+  if (path === "/guide") return "사용 가이드";
+  return "업무 홈";
+}
 
-function Home({records}:{records:WorkspaceRecord[]}) { const highRisk=records.filter(r=>r.analysis.verdict!=="GO").length; const waiting=records.filter(r=>r.confirmedRoles.length<r.analysis.receiverReceipts.length).length; const templates=[["product","제품 기획 → 개발","요구사항의 범위와 완료 조건을 맞춥니다.","제품"],["global","글로벌 협업","언어 뒤에 숨은 직무·문화 맥락을 확인합니다.","글로벌"],["operation","운영 → 여러 부서","담당자, 승인 조건과 예외 상황을 명확히 합니다.","운영"],["ai","사람 → AI Agent","에이전트가 실행할 목표와 제약을 계약으로 만듭니다.","AI"]]; return <div className="page home-page"><section className="home-hero"><div><span className="eyebrow">WORK PRE-FLIGHT</span><h1>업무가 넘어가기 전에,<br/><strong>같은 의미인지 확인하세요.</strong></h1><p>Bridge X는 요청문을 직무별로 해석해 오해 지점을 찾고, 모두가 실행할 수 있는 하나의 합의안으로 바꿉니다.</p><div className="hero-actions"><Link className="button primary" to="/preflight/new">새 업무 검사 시작 <span>→</span></Link><Link className="button ghost" to="/guide">어떻게 작동하나요?</Link></div></div><div className="hero-visual"><div className="handoff-node sender">요청자<small>의도·목표</small></div><div className="bridge-line"><span>Bridge X</span></div><div className="handoff-stack"><div>개발<small>구현 조건</small></div><div>디자인<small>사용자 경험</small></div><div>운영<small>승인·예외</small></div></div></div></section><section className="stats-row"><div><strong>{records.length}</strong><span>저장된 검사</span></div><div><strong>{highRisk}</strong><span>보완 필요</span></div><div><strong>{waiting}</strong><span>확인 대기</span></div></section><section><div className="section-heading"><div><span className="eyebrow">QUICK START</span><h2>어떤 업무를 전달하나요?</h2></div><p>유형을 고르면 알맞은 예시로 시작할 수 있습니다.</p></div><div className="template-grid">{templates.map(([key,title,body,tag])=><Link key={key} to={`/preflight/new?template=${key}`} className="template-card"><span className="template-icon">{key==="product"?"◆":key==="global"?"◎":key==="operation"?"▦":"✦"}</span><span className="tag">{tag}</span><h3>{title}</h3><p>{body}</p><b>이 유형으로 시작 →</b></Link>)}</div></section><section className="recent-section"><div className="section-heading"><div><span className="eyebrow">RECENT</span><h2>최근 업무 검사</h2></div><Link to="/history">전체 기록 보기 →</Link></div>{records.length?<div className="record-list">{records.slice(0,3).map(record=><RecordRow key={record.id} record={record}/>)}</div>:<div className="empty-state"><span>＋</span><h3>아직 저장된 업무가 없습니다</h3><p>첫 업무를 검사하면 분석·합의·담당자 확인 기록이 여기에 남습니다.</p><Link className="button primary small" to="/preflight/new">첫 검사 시작</Link></div>}</section></div>; }
+function Home({ records }: { records: WorkspaceRecord[] }) {
+  const highRisk = records.filter((r) => r.analysis.verdict !== "GO").length;
+  const waiting = records.filter(
+    (r) => r.confirmedRoles.length < r.analysis.receiverReceipts.length,
+  ).length;
+  const templates = [
+    [
+      "product",
+      "제품 기획 → 개발",
+      "요구사항의 범위와 완료 조건을 맞춥니다.",
+      "제품",
+    ],
+    [
+      "global",
+      "글로벌 협업",
+      "언어 뒤에 숨은 직무·문화 맥락을 확인합니다.",
+      "글로벌",
+    ],
+    [
+      "operation",
+      "운영 → 여러 부서",
+      "담당자, 승인 조건과 예외 상황을 명확히 합니다.",
+      "운영",
+    ],
+    [
+      "ai",
+      "사람 → AI Agent",
+      "에이전트가 실행할 목표와 제약을 계약으로 만듭니다.",
+      "AI",
+    ],
+  ];
+  return (
+    <div className="page home-page">
+      <section className="home-hero">
+        <div>
+          <span className="eyebrow">WORK PRE-FLIGHT</span>
+          <h1>
+            업무가 넘어가기 전에,
+            <br />
+            <strong>같은 의미인지 확인하세요.</strong>
+          </h1>
+          <p>
+            Operation AI는 요청문을 직무별로 해석해 오해 지점을 찾고, 모두가 실행할
+            수 있는 하나의 합의안으로 바꿉니다.
+          </p>
+          <div className="hero-actions">
+            <Link className="button primary" to="/preflight/new">
+              새 업무 검사 시작 <span>→</span>
+            </Link>
+            <Link className="button ghost" to="/guide">
+              어떻게 작동하나요?
+            </Link>
+          </div>
+        </div>
+        <div className="hero-visual">
+          <div className="handoff-node sender">
+            요청자<small>의도·목표</small>
+          </div>
+          <div className="bridge-line">
+            <span>Operation AI</span>
+          </div>
+          <div className="handoff-stack">
+            <div>
+              개발<small>구현 조건</small>
+            </div>
+            <div>
+              디자인<small>사용자 경험</small>
+            </div>
+            <div>
+              운영<small>승인·예외</small>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section className="stats-row">
+        <div>
+          <strong>{records.length}</strong>
+          <span>저장된 검사</span>
+        </div>
+        <div>
+          <strong>{highRisk}</strong>
+          <span>보완 필요</span>
+        </div>
+        <div>
+          <strong>{waiting}</strong>
+          <span>확인 대기</span>
+        </div>
+      </section>
+      <section>
+        <div className="section-heading">
+          <div>
+            <span className="eyebrow">QUICK START</span>
+            <h2>어떤 업무를 전달하나요?</h2>
+          </div>
+          <p>유형을 고르면 알맞은 예시로 시작할 수 있습니다.</p>
+        </div>
+        <div className="template-grid">
+          {templates.map(([key, title, body, tag]) => (
+            <Link
+              key={key}
+              to={`/preflight/new?template=${key}`}
+              className="template-card"
+            >
+              <span className="template-icon">
+                {key === "product"
+                  ? "◆"
+                  : key === "global"
+                    ? "◎"
+                    : key === "operation"
+                      ? "▦"
+                      : "✦"}
+              </span>
+              <span className="tag">{tag}</span>
+              <h3>{title}</h3>
+              <p>{body}</p>
+              <b>이 유형으로 시작 →</b>
+            </Link>
+          ))}
+        </div>
+      </section>
+      <section className="recent-section">
+        <div className="section-heading">
+          <div>
+            <span className="eyebrow">RECENT</span>
+            <h2>최근 업무 검사</h2>
+          </div>
+          <Link to="/history">전체 기록 보기 →</Link>
+        </div>
+        {records.length ? (
+          <div className="record-list">
+            {records.slice(0, 3).map((record) => (
+              <RecordRow key={record.id} record={record} />
+            ))}
+          </div>
+        ) : (
+          <div className="empty-state">
+            <span>＋</span>
+            <h3>아직 저장된 업무가 없습니다</h3>
+            <p>
+              첫 업무를 검사하면 분석·합의·담당자 확인 기록이 여기에 남습니다.
+            </p>
+            <Link className="button primary small" to="/preflight/new">
+              첫 검사 시작
+            </Link>
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
 
-const templateData:Record<string,Partial<AnalyzeRequest>>={product:sampleRequest,global:{projectName:"글로벌 캠페인 론칭",mission:"한국 본사의 캠페인 방향을 현지 마케팅·영업팀이 같은 기준으로 실행한다.",sourceRole:"Marketing",targetRoles:["Sales","Operations"]},operation:{projectName:"고객 이슈 대응 프로세스",mission:"긴급 고객 이슈를 부서 간 누락 없이 처리하고 책임과 승인 시점을 명확히 한다.",sourceRole:"Operations",targetRoles:["Backend Engineer","Product Manager"]},ai:{projectName:"리서치 Agent 인수인계",mission:"AI Agent가 신뢰 가능한 근거만 사용해 의사결정용 리서치를 완성한다.",sourceRole:"Product Manager",targetRoles:["Backend Engineer","Risk & Compliance"]}};
-function NewPreflight({onComplete}:{onComplete:(request:AnalyzeRequest,analysis:AnalyzeResponse)=>WorkspaceRecord}) { const navigate=useNavigate(); const [params]=useSearchParams(); const seed=templateData[params.get("template")??""]??{}; const [step,setStep]=useState(1); const [loading,setLoading]=useState(false); const [error,setError]=useState(""); const [form,setForm]=useState<AnalyzeRequest>({projectName:seed.projectName??"",mission:seed.mission??"",sourceRole:seed.sourceRole??"Product Manager",targetRoles:seed.targetRoles??["UX Designer"],brief:seed.brief??"",constraints:seed.constraints??[]}); const [constraint,setConstraint]=useState(""); const ready=step===1?form.projectName.trim()&&form.mission.trim():step===2?form.sourceRole&&form.targetRoles.length:step===3?form.brief.trim().length>=20:true; const setField=<K extends keyof AnalyzeRequest>(key:K,value:AnalyzeRequest[K])=>setForm(prev=>({...prev,[key]:value})); const toggleRole=(role:string)=>setField("targetRoles",form.targetRoles.includes(role)?form.targetRoles.filter(item=>item!==role):[...form.targetRoles,role]); const addConstraint=()=>{const value=constraint.trim();if(value&&!form.constraints.includes(value))setField("constraints",[...form.constraints,value]);setConstraint("");}; const analyze=async()=>{setLoading(true);setError("");try{const response=await fetch("/api/analyze",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(form)});if(!response.ok)throw new Error("분석 요청에 실패했습니다.");const data=await response.json() as AnalyzeResponse;const record=onComplete(form,data);navigate(`/preflight/${record.id}`);}catch(reason){setError(reason instanceof Error?reason.message:"잠시 후 다시 시도해 주세요.");}finally{setLoading(false);}}; return <div className="page narrow-page"><div className="wizard-head"><div><span className="eyebrow">NEW PREFLIGHT</span><h1>새 업무 검사</h1><p>한 번에 하나씩 입력하면 AI가 직무별 의미 충돌을 확인합니다.</p></div><button className="text-button" onClick={()=>{setForm(sampleRequest);setStep(4)}}>예시로 채우기</button></div><ol className="stepper">{["업무 정보","참여 직무","요청 내용","검사 전 확인"].map((label,index)=><li className={step===index+1?"active":step>index+1?"done":""} key={label}><span>{step>index+1?"✓":index+1}</span><b>{label}</b></li>)}</ol><div className="wizard-card">{step===1&&<><StepTitle number="01" title="어떤 업무인가요?" body="프로젝트 이름과 이 업무가 달성해야 할 결과를 적어주세요."/><label>업무·프로젝트 이름<input value={form.projectName} onChange={e=>setField("projectName",e.target.value)} placeholder="예: 글로벌 결제 개선"/></label><label>공통 목표<textarea value={form.mission} onChange={e=>setField("mission",e.target.value)} placeholder="누가 무엇을 위해 어떤 결과를 만들어야 하나요?" rows={4}/><small>{form.mission.length}/200</small></label></>}{step===2&&<><StepTitle number="02" title="누가 누구에게 전달하나요?" body="같은 표현도 직무에 따라 다르게 해석됩니다."/><div className="role-block"><b>요청을 보내는 직무</b><div className="choice-grid">{roles.map(role=><button className={form.sourceRole===role?"selected":""} onClick={()=>setField("sourceRole",role)} key={role}>{roleName(role)}</button>)}</div></div><div className="role-block"><b>업무를 받는 직무 <span>복수 선택</span></b><div className="choice-grid">{roles.filter(r=>r!==form.sourceRole).map(role=><button className={form.targetRoles.includes(role)?"selected":""} onClick={()=>toggleRole(role)} key={role}>{roleName(role)}</button>)}</div></div></>}{step===3&&<><StepTitle number="03" title="실제 요청문을 붙여 넣으세요" body="요약하지 말고 팀원에게 보낼 문장 그대로 입력하는 것이 좋습니다."/><label>업무 요청문<textarea className="brief-input" value={form.brief} onChange={e=>setField("brief",e.target.value)} placeholder="배경, 기대 결과, 요청 사항, 일정 등을 자유롭게 적어주세요." rows={8}/><small>최소 20자 · 현재 {form.brief.length}자</small></label><label>반드시 지켜야 할 조건 <span className="optional">선택</span><div className="inline-input"><input value={constraint} onChange={e=>setConstraint(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();addConstraint();}}} placeholder="예: 4주 내 베타 출시"/><button onClick={addConstraint}>추가</button></div></label><div className="chip-list">{form.constraints.map(item=><button onClick={()=>setField("constraints",form.constraints.filter(c=>c!==item))} key={item}>{item} ×</button>)}</div></>}{step===4&&<><StepTitle number="04" title="이 내용으로 검사할까요?" body="입력 내용은 의미 충돌 분석과 실행 합의안 생성에 사용됩니다."/><div className="review-list"><Review label="업무" value={form.projectName}/><Review label="목표" value={form.mission}/><Review label="전달" value={`${roleName(form.sourceRole)} → ${form.targetRoles.map(roleName).join(", ")}`}/><Review label="요청문" value={form.brief}/><Review label="필수 조건" value={form.constraints.join(" · ")||"별도 조건 없음"}/></div><div className="privacy-note"><b>보안 안내</b><p>개인정보, 고객 식별 정보, 회사의 비밀정보는 제거한 뒤 입력해 주세요.</p></div>{error&&<p className="form-error">{error}</p>}</>}<div className="wizard-actions"><button className="button ghost" disabled={step===1||loading} onClick={()=>setStep(step-1)}>이전</button>{step<4?<button className="button primary" disabled={!ready} onClick={()=>setStep(step+1)}>다음 단계 →</button>:<button className="button primary" disabled={loading} onClick={analyze}>{loading?"AI가 직무별로 분석 중…":"AI 검사 시작 →"}</button>}</div></div></div>; }
-function StepTitle({number,title,body}:{number:string;title:string;body:string}){return <div className="step-title"><span>{number}</span><div><h2>{title}</h2><p>{body}</p></div></div>;} function Review({label,value}:{label:string;value:string}){return <div><b>{label}</b><p>{value}</p></div>;}
-function useRecord(records:WorkspaceRecord[]){const{id}=useParams();return records.find(record=>record.id===id);} function Journey({record,active}:{record:WorkspaceRecord;active:"analysis"|"agreement"|"receipts"}){const links=[["analysis","1. 의미 충돌 진단",`/preflight/${record.id}`],["agreement","2. 실행 합의",`/preflight/${record.id}/agreement`],["receipts","3. 담당자 확인",`/preflight/${record.id}/receipts`]];return <nav className="journey">{links.map(([key,label,to],index)=><span key={key}><Link className={active===key?"active":""} to={to}>{label}</Link>{index<2&&<i>→</i>}</span>)}</nav>;}
+const templateData: Record<string, Partial<AnalyzeRequest>> = {
+  product: sampleRequest,
+  global: {
+    projectName: "글로벌 캠페인 론칭",
+    mission:
+      "한국 본사의 캠페인 방향을 현지 마케팅·영업팀이 같은 기준으로 실행한다.",
+    sourceRole: "Marketing",
+    targetRoles: ["Sales", "Operations"],
+  },
+  operation: {
+    projectName: "고객 이슈 대응 프로세스",
+    mission:
+      "긴급 고객 이슈를 부서 간 누락 없이 처리하고 책임과 승인 시점을 명확히 한다.",
+    sourceRole: "Operations",
+    targetRoles: ["Backend Engineer", "Product Manager"],
+  },
+  ai: {
+    projectName: "리서치 Agent 인수인계",
+    mission:
+      "AI Agent가 신뢰 가능한 근거만 사용해 의사결정용 리서치를 완성한다.",
+    sourceRole: "Product Manager",
+    targetRoles: ["Backend Engineer", "Risk & Compliance"],
+  },
+};
+function NewPreflight({
+  onComplete,
+}: {
+  onComplete: (
+    request: AnalyzeRequest,
+    analysis: AnalyzeResponse,
+  ) => WorkspaceRecord;
+}) {
+  const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const seed = templateData[params.get("template") ?? ""] ?? {};
+  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [form, setForm] = useState<AnalyzeRequest>({
+    projectName: seed.projectName ?? "",
+    mission: seed.mission ?? "",
+    sourceRole: seed.sourceRole ?? "Product Manager",
+    targetRoles: seed.targetRoles ?? ["UX Designer"],
+    brief: seed.brief ?? "",
+    constraints: seed.constraints ?? [],
+  });
+  const [constraint, setConstraint] = useState("");
+  const ready =
+    step === 1
+      ? form.projectName.trim() && form.mission.trim()
+      : step === 2
+        ? form.sourceRole && form.targetRoles.length
+        : step === 3
+          ? form.brief.trim().length >= 20
+          : true;
+  const setField = <K extends keyof AnalyzeRequest>(
+    key: K,
+    value: AnalyzeRequest[K],
+  ) => setForm((prev) => ({ ...prev, [key]: value }));
+  const toggleRole = (role: string) =>
+    setField(
+      "targetRoles",
+      form.targetRoles.includes(role)
+        ? form.targetRoles.filter((item) => item !== role)
+        : [...form.targetRoles, role],
+    );
+  const addConstraint = () => {
+    const value = constraint.trim();
+    if (value && !form.constraints.includes(value))
+      setField("constraints", [...form.constraints, value]);
+    setConstraint("");
+  };
+  const analyze = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!response.ok) throw new Error("분석 요청에 실패했습니다.");
+      const data = (await response.json()) as AnalyzeResponse;
+      const record = onComplete(form, data);
+      navigate(`/preflight/${record.id}`);
+    } catch (reason) {
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : "잠시 후 다시 시도해 주세요.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+  return (
+    <div className="page narrow-page">
+      <div className="wizard-head">
+        <div>
+          <span className="eyebrow">NEW PREFLIGHT</span>
+          <h1>새 업무 검사</h1>
+          <p>한 번에 하나씩 입력하면 AI가 직무별 의미 충돌을 확인합니다.</p>
+        </div>
+        <button
+          className="text-button"
+          onClick={() => {
+            setForm(sampleRequest);
+            setStep(4);
+          }}
+        >
+          예시로 채우기
+        </button>
+      </div>
+      <ol className="stepper">
+        {["업무 정보", "참여 직무", "요청 내용", "검사 전 확인"].map(
+          (label, index) => (
+            <li
+              className={
+                step === index + 1 ? "active" : step > index + 1 ? "done" : ""
+              }
+              key={label}
+            >
+              <span>{step > index + 1 ? "✓" : index + 1}</span>
+              <b>{label}</b>
+            </li>
+          ),
+        )}
+      </ol>
+      <div className="wizard-card">
+        {step === 1 && (
+          <>
+            <StepTitle
+              number="01"
+              title="어떤 업무인가요?"
+              body="프로젝트 이름과 이 업무가 달성해야 할 결과를 적어주세요."
+            />
+            <label>
+              업무·프로젝트 이름
+              <input
+                value={form.projectName}
+                onChange={(e) => setField("projectName", e.target.value)}
+                placeholder="예: 글로벌 결제 개선"
+              />
+            </label>
+            <label>
+              공통 목표
+              <textarea
+                value={form.mission}
+                onChange={(e) => setField("mission", e.target.value)}
+                placeholder="누가 무엇을 위해 어떤 결과를 만들어야 하나요?"
+                rows={4}
+              />
+              <small>{form.mission.length}/200</small>
+            </label>
+          </>
+        )}
+        {step === 2 && (
+          <>
+            <StepTitle
+              number="02"
+              title="누가 누구에게 전달하나요?"
+              body="같은 표현도 직무에 따라 다르게 해석됩니다."
+            />
+            <div className="role-block">
+              <b>요청을 보내는 직무</b>
+              <div className="choice-grid">
+                {roles.map((role) => (
+                  <button
+                    className={form.sourceRole === role ? "selected" : ""}
+                    onClick={() => setField("sourceRole", role)}
+                    key={role}
+                  >
+                    {roleName(role)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="role-block">
+              <b>
+                업무를 받는 직무 <span>복수 선택</span>
+              </b>
+              <div className="choice-grid">
+                {roles
+                  .filter((r) => r !== form.sourceRole)
+                  .map((role) => (
+                    <button
+                      className={
+                        form.targetRoles.includes(role) ? "selected" : ""
+                      }
+                      onClick={() => toggleRole(role)}
+                      key={role}
+                    >
+                      {roleName(role)}
+                    </button>
+                  ))}
+              </div>
+            </div>
+          </>
+        )}
+        {step === 3 && (
+          <>
+            <StepTitle
+              number="03"
+              title="실제 요청문을 붙여 넣으세요"
+              body="요약하지 말고 팀원에게 보낼 문장 그대로 입력하는 것이 좋습니다."
+            />
+            <label>
+              업무 요청문
+              <textarea
+                className="brief-input"
+                value={form.brief}
+                onChange={(e) => setField("brief", e.target.value)}
+                placeholder="배경, 기대 결과, 요청 사항, 일정 등을 자유롭게 적어주세요."
+                rows={8}
+              />
+              <small>최소 20자 · 현재 {form.brief.length}자</small>
+            </label>
+            <label>
+              반드시 지켜야 할 조건 <span className="optional">선택</span>
+              <div className="inline-input">
+                <input
+                  value={constraint}
+                  onChange={(e) => setConstraint(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addConstraint();
+                    }
+                  }}
+                  placeholder="예: 4주 내 베타 출시"
+                />
+                <button onClick={addConstraint}>추가</button>
+              </div>
+            </label>
+            <div className="chip-list">
+              {form.constraints.map((item) => (
+                <button
+                  onClick={() =>
+                    setField(
+                      "constraints",
+                      form.constraints.filter((c) => c !== item),
+                    )
+                  }
+                  key={item}
+                >
+                  {item} ×
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+        {step === 4 && (
+          <>
+            <StepTitle
+              number="04"
+              title="이 내용으로 검사할까요?"
+              body="입력 내용은 의미 충돌 분석과 실행 합의안 생성에 사용됩니다."
+            />
+            <div className="review-list">
+              <Review label="업무" value={form.projectName} />
+              <Review label="목표" value={form.mission} />
+              <Review
+                label="전달"
+                value={`${roleName(form.sourceRole)} → ${form.targetRoles.map(roleName).join(", ")}`}
+              />
+              <Review label="요청문" value={form.brief} />
+              <Review
+                label="필수 조건"
+                value={form.constraints.join(" · ") || "별도 조건 없음"}
+              />
+            </div>
+            <div className="privacy-note">
+              <b>보안 안내</b>
+              <p>
+                개인정보, 고객 식별 정보, 회사의 비밀정보는 제거한 뒤 입력해
+                주세요.
+              </p>
+            </div>
+            {error && <p className="form-error">{error}</p>}
+          </>
+        )}
+        <div className="wizard-actions">
+          <button
+            className="button ghost"
+            disabled={step === 1 || loading}
+            onClick={() => setStep(step - 1)}
+          >
+            이전
+          </button>
+          {step < 4 ? (
+            <button
+              className="button primary"
+              disabled={!ready}
+              onClick={() => setStep(step + 1)}
+            >
+              다음 단계 →
+            </button>
+          ) : (
+            <button
+              className="button primary"
+              disabled={loading}
+              onClick={analyze}
+            >
+              {loading ? "AI가 직무별로 분석 중…" : "AI 검사 시작 →"}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+function StepTitle({
+  number,
+  title,
+  body,
+}: {
+  number: string;
+  title: string;
+  body: string;
+}) {
+  return (
+    <div className="step-title">
+      <span>{number}</span>
+      <div>
+        <h2>{title}</h2>
+        <p>{body}</p>
+      </div>
+    </div>
+  );
+}
+function Review({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <b>{label}</b>
+      <p>{value}</p>
+    </div>
+  );
+}
+function useRecord(records: WorkspaceRecord[]) {
+  const { id } = useParams();
+  return records.find((record) => record.id === id);
+}
+function Journey({
+  record,
+  active,
+}: {
+  record: WorkspaceRecord;
+  active: "analysis" | "agreement" | "receipts";
+}) {
+  const links = [
+    ["analysis", "1. 의미 충돌 진단", `/preflight/${record.id}`],
+    ["agreement", "2. 실행 합의", `/preflight/${record.id}/agreement`],
+    ["receipts", "3. 담당자 확인", `/preflight/${record.id}/receipts`],
+  ];
+  return (
+    <nav className="journey">
+      {links.map(([key, label, to], index) => (
+        <span key={key}>
+          <Link className={active === key ? "active" : ""} to={to}>
+            {label}
+          </Link>
+          {index < 2 && <i>→</i>}
+        </span>
+      ))}
+    </nav>
+  );
+}
 
-function Analysis({records}:{records:WorkspaceRecord[]}){const record=useRecord(records);const[filter,setFilter]=useState<CategoryKey>("all");if(!record)return <Missing/>;const{analysis,request}=record;const diffs=analysis.meaningDiffs.filter(item=>filter==="all"||categoryKey(item.category)===filter);const counts=analysis.meaningDiffs.reduce<Record<string,number>>((acc,item)=>{const key=categoryKey(item.category);acc[key]=(acc[key]||0)+1;return acc;},{});return <div className="page"><Journey record={record} active="analysis"/><section className="result-head"><div><span className="eyebrow">{analysis.generationMode==="ai"?"AI ANALYSIS":"DEMO ANALYSIS"}</span><h1>{request.projectName}</h1><p>{analysis.summary}</p><div className="meta-row"><span>{roleName(request.sourceRole)} → {request.targetRoles.length}개 직무</span><span>{formatDate(record.createdAt)}</span></div></div><div className={`verdict ${analysis.verdict.toLowerCase()}`}><small>시작 판단</small><strong>{verdictKo[analysis.verdict]}</strong></div></section><section className="score-grid"><Score label="의미 일치도" value={analysis.scores.alignment} help="요청자와 수신자 해석이 같은 정도"/><Score label="실행 준비도" value={analysis.scores.readiness} help="바로 실행할 만큼 조건이 정해진 정도"/><Score label="오해 위험" value={analysis.scores.semanticRisk} inverse help="재작업이나 책임 공백이 생길 가능성"/></section><section className="content-section"><div className="section-heading"><div><span className="eyebrow">MEANING DIFF</span><h2>카테고리별 의미 충돌</h2></div><p>AI 분석에 따라 항목 수와 명칭은 달라질 수 있습니다.</p></div><div className="category-filter">{(Object.keys(categoryMeta) as CategoryKey[]).filter(key=>key==="all"||counts[key]).map(key=><button className={filter===key?"active":""} onClick={()=>setFilter(key)} key={key}><span>{categoryMeta[key].icon}</span>{categoryMeta[key].label}<em>{key==="all"?analysis.meaningDiffs.length:counts[key]}</em></button>)}</div><div className="diff-list">{diffs.map((item,index)=><article className="diff-card" key={item.id}><div className="diff-top"><span className={`severity ${item.severity}`}>{severityKo[item.severity]}</span><span className="diff-category">{item.category}</span><span className="diff-number">{String(index+1).padStart(2,"0")}</span></div><blockquote>“{item.sourcePhrase}”</blockquote><div className="compare-grid"><div><b>요청자의 의도</b><p>{item.senderIntent}</p></div><div><b>수신자가 다르게 이해할 수 있는 지점</b><p>{item.receiverInterpretation}</p></div></div><div className="impact"><b>업무 영향</b><p>{item.impact}</p></div><div className="decision-callout"><span>결정 필요</span><p>{item.requiredDecision}</p></div></article>)}</div></section><div className="next-panel"><div><b>충돌 지점을 확인했다면</b><p>AI가 제안한 목표·범위·완료 조건을 팀의 실행 합의로 확정하세요.</p></div><Link className="button primary" to={`/preflight/${record.id}/agreement`}>실행 합의 검토 →</Link></div></div>;}
-function Score({label,value,help,inverse=false}:{label:string;value:number;help:string;inverse?:boolean}){const tone=inverse?(value>70?"bad":value>45?"warn":"good"):(value<55?"bad":value<75?"warn":"good");return <div className="score-card"><div><span>{label}</span><strong className={tone}>{value}<small>/100</small></strong></div><div className="score-track"><i className={tone} style={{width:`${value}%`}}/></div><p>{help}</p></div>;}
+function Analysis({ records }: { records: WorkspaceRecord[] }) {
+  const record = useRecord(records);
+  const [filter, setFilter] = useState<CategoryKey>("all");
+  if (!record) return <Missing />;
+  const { analysis, request } = record;
+  const diffs = analysis.meaningDiffs.filter(
+    (item) => filter === "all" || categoryKey(item.category) === filter,
+  );
+  const counts = analysis.meaningDiffs.reduce<Record<string, number>>(
+    (acc, item) => {
+      const key = categoryKey(item.category);
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    },
+    {},
+  );
+  return (
+    <div className="page">
+      <Journey record={record} active="analysis" />
+      <section className="result-head">
+        <div>
+          <span className="eyebrow">
+            {analysis.generationMode === "ai" ? "AI ANALYSIS" : "DEMO ANALYSIS"}
+          </span>
+          <h1>{request.projectName}</h1>
+          <p>{analysis.summary}</p>
+          <div className="meta-row">
+            <span>
+              {roleName(request.sourceRole)} → {request.targetRoles.length}개
+              직무
+            </span>
+            <span>{formatDate(record.createdAt)}</span>
+          </div>
+        </div>
+        <div className={`verdict ${analysis.verdict.toLowerCase()}`}>
+          <small>시작 판단</small>
+          <strong>{verdictKo[analysis.verdict]}</strong>
+        </div>
+      </section>
+      <section className="score-grid">
+        <Score
+          label="의미 일치도"
+          value={analysis.scores.alignment}
+          help="요청자와 수신자 해석이 같은 정도"
+        />
+        <Score
+          label="실행 준비도"
+          value={analysis.scores.readiness}
+          help="바로 실행할 만큼 조건이 정해진 정도"
+        />
+        <Score
+          label="오해 위험"
+          value={analysis.scores.semanticRisk}
+          inverse
+          help="재작업이나 책임 공백이 생길 가능성"
+        />
+      </section>
+      <section className="content-section">
+        <div className="section-heading">
+          <div>
+            <span className="eyebrow">MEANING DIFF</span>
+            <h2>카테고리별 의미 충돌</h2>
+          </div>
+          <p>AI 분석에 따라 항목 수와 명칭은 달라질 수 있습니다.</p>
+        </div>
+        <div className="category-filter">
+          {(Object.keys(categoryMeta) as CategoryKey[])
+            .filter((key) => key === "all" || counts[key])
+            .map((key) => (
+              <button
+                className={filter === key ? "active" : ""}
+                onClick={() => setFilter(key)}
+                key={key}
+              >
+                <span>{categoryMeta[key].icon}</span>
+                {categoryMeta[key].label}
+                <em>
+                  {key === "all" ? analysis.meaningDiffs.length : counts[key]}
+                </em>
+              </button>
+            ))}
+        </div>
+        <div className="diff-list">
+          {diffs.map((item, index) => (
+            <article className="diff-card" key={item.id}>
+              <div className="diff-top">
+                <span className={`severity ${item.severity}`}>
+                  {severityKo[item.severity]}
+                </span>
+                <span className="diff-category">{item.category}</span>
+                <span className="diff-number">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+              </div>
+              <blockquote>“{item.sourcePhrase}”</blockquote>
+              <div className="compare-grid">
+                <div>
+                  <b>요청자의 의도</b>
+                  <p>{item.senderIntent}</p>
+                </div>
+                <div>
+                  <b>수신자가 다르게 이해할 수 있는 지점</b>
+                  <p>{item.receiverInterpretation}</p>
+                </div>
+              </div>
+              <div className="impact">
+                <b>업무 영향</b>
+                <p>{item.impact}</p>
+              </div>
+              <div className="decision-callout">
+                <span>결정 필요</span>
+                <p>{item.requiredDecision}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+      <div className="next-panel">
+        <div>
+          <b>충돌 지점을 확인했다면</b>
+          <p>AI가 제안한 목표·범위·완료 조건을 팀의 실행 합의로 확정하세요.</p>
+        </div>
+        <Link
+          className="button primary"
+          to={`/preflight/${record.id}/agreement`}
+        >
+          실행 합의 검토 →
+        </Link>
+      </div>
+    </div>
+  );
+}
+function Score({
+  label,
+  value,
+  help,
+  inverse = false,
+}: {
+  label: string;
+  value: number;
+  help: string;
+  inverse?: boolean;
+}) {
+  const tone = inverse
+    ? value > 70
+      ? "bad"
+      : value > 45
+        ? "warn"
+        : "good"
+    : value < 55
+      ? "bad"
+      : value < 75
+        ? "warn"
+        : "good";
+  return (
+    <div className="score-card">
+      <div>
+        <span>{label}</span>
+        <strong className={tone}>
+          {value}
+          <small>/100</small>
+        </strong>
+      </div>
+      <div className="score-track">
+        <i className={tone} style={{ width: `${value}%` }} />
+      </div>
+      <p>{help}</p>
+    </div>
+  );
+}
 
-function Agreement({records,patchRecord}:{records:WorkspaceRecord[];patchRecord:(id:string,patch:Partial<WorkspaceRecord>)=>void}){const record=useRecord(records);if(!record)return <Missing/>;const{analysis}=record;const toggle=(id:string)=>patchRecord(record.id,{confirmedDecisions:record.confirmedDecisions.includes(id)?record.confirmedDecisions.filter(x=>x!==id):[...record.confirmedDecisions,id]});const complete=record.confirmedDecisions.length===analysis.decisions.length;return <div className="page"><Journey record={record} active="agreement"/><div className="page-title"><span className="eyebrow">SHARED CONTRACT</span><h1>팀 실행 합의안</h1><p>공통 계약은 법률 계약이 아니라, 서로 다른 직무가 같은 기준으로 일하기 위한 <b>업무 합의점</b>입니다.</p></div><div className="two-column"><section className="contract-list">{analysis.sharedContract.map((section,index)=><article key={section.title}><div className="contract-index">{String(index+1).padStart(2,"0")}</div><div><h2>{section.title.replace(/^\d+\s*·\s*/,"")}</h2>{section.items.map(item=><p key={item}><span>✓</span>{item}</p>)}</div></article>)}</section><aside className="decision-panel"><div className="sticky-panel"><span className="eyebrow">OPEN DECISIONS</span><h2>확정할 결정</h2><p>팀에서 합의된 항목을 체크하세요. 이 브라우저에 저장됩니다.</p><div className="progress"><i style={{width:`${analysis.decisions.length?record.confirmedDecisions.length/analysis.decisions.length*100:100}%`}}/></div><small>{record.confirmedDecisions.length}/{analysis.decisions.length}개 확정</small>{analysis.decisions.map(item=><label className="decision-item" key={item.id}><input type="checkbox" checked={record.confirmedDecisions.includes(item.id)} onChange={()=>toggle(item.id)}/><span><b>{item.question}</b><small>{roleName(item.owner)} · {item.due}</small></span></label>)}<Link className={`button primary full ${!complete?"soft":""}`} to={`/preflight/${record.id}/receipts`}>{complete?"담당자 확인으로 →":"미결정 포함하고 계속 →"}</Link></div></aside></div></div>;}
-function Receipts({records,patchRecord}:{records:WorkspaceRecord[];patchRecord:(id:string,patch:Partial<WorkspaceRecord>)=>void}){const record=useRecord(records);if(!record)return <Missing/>;const receipts=record.analysis.receiverReceipts;const toggle=(role:string)=>patchRecord(record.id,{confirmedRoles:record.confirmedRoles.includes(role)?record.confirmedRoles.filter(x=>x!==role):[...record.confirmedRoles,role]});const complete=receipts.length>0&&record.confirmedRoles.length===receipts.length;return <div className="page"><Journey record={record} active="receipts"/><div className="page-title"><span className="eyebrow">RECEIVER RECEIPT</span><h1>담당자 이해 확인</h1><p>각 담당자가 “내가 이해한 목표와 납품물”을 확인하면 업무 인수인계가 끝납니다.</p></div>{complete&&<div className="complete-banner"><span>✓</span><div><b>모든 담당자가 확인했습니다</b><p>이 업무는 공통 합의와 수신 확인을 갖춘 상태입니다.</p></div></div>}<div className="receipt-grid">{receipts.map((item,index)=>{const checked=record.confirmedRoles.includes(item.role);return <article className={checked?"confirmed":""} key={item.role}><div className="receipt-head"><span className="avatar">{index+1}</span><div><h2>{roleName(item.role)}</h2><p>이해 확신도 {item.confidence}%</p></div><span className="confidence">{item.confidence}</span></div><dl><div><dt>내가 이해한 목표</dt><dd>{item.understood}</dd></div><div><dt>내가 납품할 결과</dt><dd>{item.willDeliver}</dd></div><div className="missing"><dt>아직 필요한 정보</dt><dd>{item.missing}</dd></div></dl><button className={checked?"confirm-button checked":"confirm-button"} onClick={()=>toggle(item.role)}>{checked?"✓ 이해 내용 확인 완료":"이 내용으로 이해했습니다"}</button></article>})}</div><div className="next-panel"><div><b>{complete?"인수인계가 완료되었습니다":"아직 확인하지 않은 담당자가 있습니다"}</b><p>{complete?"분석 기록에서 언제든 합의 내용과 확인 상태를 다시 볼 수 있습니다.":`${receipts.length-record.confirmedRoles.length}명의 확인이 남았습니다.`}</p></div><Link className="button ghost" to="/history">분석 기록 보기 →</Link></div></div>;}
-function History({records}:{records:WorkspaceRecord[]}){const[query,setQuery]=useState("");const filtered=useMemo(()=>records.filter(r=>`${r.request.projectName} ${r.request.mission}`.toLowerCase().includes(query.toLowerCase())),[records,query]);return <div className="page"><div className="page-title split"><div><span className="eyebrow">WORK ARCHIVE</span><h1>분석 기록</h1><p>검사한 업무와 합의·확인 진행 상태를 이어서 관리하세요.</p></div><Link className="button primary" to="/preflight/new">＋ 새 업무 검사</Link></div><div className="history-tools"><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="업무 이름이나 목표로 검색"/><span>{filtered.length}개 업무</span></div>{filtered.length?<div className="record-list large">{filtered.map(record=><RecordRow record={record} key={record.id}/>)}</div>:<div className="empty-state"><span>⌕</span><h3>{records.length?"검색 결과가 없습니다":"아직 검사한 업무가 없습니다"}</h3><p>{records.length?"다른 검색어를 입력해 보세요.":"새 업무 검사에서 첫 분석을 시작하세요."}</p></div>}</div>;}
-function RecordRow({record}:{record:WorkspaceRecord}){const progress=record.analysis.receiverReceipts.length?record.confirmedRoles.length/record.analysis.receiverReceipts.length:0;return <Link className="record-row" to={`/preflight/${record.id}`}><span className={`record-status ${record.analysis.verdict.toLowerCase()}`}>{verdictKo[record.analysis.verdict]}</span><div className="record-main"><h3>{record.request.projectName}</h3><p>{record.request.mission}</p><small>{roleName(record.request.sourceRole)} → {record.request.targetRoles.map(roleName).join(", ")}</small></div><div className="record-progress"><b>담당자 확인 {record.confirmedRoles.length}/{record.analysis.receiverReceipts.length}</b><span><i style={{width:`${progress*100}%`}}/></span><small>{formatDate(record.createdAt)}</small></div><b className="arrow">→</b></Link>;}
-function Guide(){return <div className="page guide-page"><div className="page-title"><span className="eyebrow">HOW IT WORKS</span><h1>Bridge X 사용 가이드</h1><p>번역보다 중요한 것은 “같은 문장을 같은 업무 기준으로 이해했는가”입니다.</p></div><div className="guide-flow">{[["01","요청 입력","실제 업무 요청문과 참여 직무를 입력합니다."],["02","의미 충돌 진단","AI가 목표·범위·제약·책임·완료 기준의 해석 차이를 찾습니다."],["03","실행 합의","모든 직무가 사용할 하나의 목표와 완료 조건을 정합니다."],["04","수신 확인","담당자가 이해한 목표·납품물·부족한 정보를 확인합니다."]].map(([n,t,b])=><article key={n}><span>{n}</span><h2>{t}</h2><p>{b}</p></article>)}</div><section className="guide-principle"><div><span className="eyebrow">CORE PRINCIPLE</span><h2>공통 계약은 ‘합의점’입니다</h2></div><p>법적 계약서가 아니라, 각자 다르게 해석했던 요청을 <b>공통 목표·업무 범위·필수 제약·완료 기준</b>으로 다시 쓴 실행 문서입니다.</p></section><div className="guide-columns"><section><h2>이럴 때 사용하세요</h2><ul><li>기획서를 개발·디자인에 넘기기 전</li><li>해외 지사나 외부 파트너와 협업할 때</li><li>운영 정책을 여러 부서에 전달할 때</li><li>사람의 요청을 AI Agent에 위임할 때</li></ul></section><section><h2>입력하면 안 되는 정보</h2><ul><li>주민번호·전화번호 등 개인정보</li><li>고객을 식별할 수 있는 데이터</li><li>공개하면 안 되는 회사 비밀정보</li><li>권한 없이 공유하는 제3자 자료</li></ul></section></div><Link className="button primary" to="/preflight/new">새 업무 검사 시작 →</Link></div>;}
-function Missing(){return <div className="page"><div className="empty-state"><span>!</span><h2>분석 기록을 찾을 수 없습니다</h2><p>이 브라우저에 저장되지 않았거나 주소가 올바르지 않습니다.</p><Link className="button primary" to="/">업무 홈으로</Link></div></div>;}
+function Agreement({
+  records,
+  patchRecord,
+}: {
+  records: WorkspaceRecord[];
+  patchRecord: (id: string, patch: Partial<WorkspaceRecord>) => void;
+}) {
+  const record = useRecord(records);
+  if (!record) return <Missing />;
+  const { analysis } = record;
+  const toggle = (id: string) =>
+    patchRecord(record.id, {
+      confirmedDecisions: record.confirmedDecisions.includes(id)
+        ? record.confirmedDecisions.filter((x) => x !== id)
+        : [...record.confirmedDecisions, id],
+    });
+  const complete =
+    record.confirmedDecisions.length === analysis.decisions.length;
+  return (
+    <div className="page">
+      <Journey record={record} active="agreement" />
+      <div className="page-title">
+        <span className="eyebrow">SHARED CONTRACT</span>
+        <h1>팀 실행 합의안</h1>
+        <p>
+          공통 계약은 법률 계약이 아니라, 서로 다른 직무가 같은 기준으로 일하기
+          위한 <b>업무 합의점</b>입니다.
+        </p>
+      </div>
+      <div className="two-column">
+        <section className="contract-list">
+          {analysis.sharedContract.map((section, index) => (
+            <article key={section.title}>
+              <div className="contract-index">
+                {String(index + 1).padStart(2, "0")}
+              </div>
+              <div>
+                <h2>{section.title.replace(/^\d+\s*·\s*/, "")}</h2>
+                {section.items.map((item) => (
+                  <p key={item}>
+                    <span>✓</span>
+                    {item}
+                  </p>
+                ))}
+              </div>
+            </article>
+          ))}
+        </section>
+        <aside className="decision-panel">
+          <div className="sticky-panel">
+            <span className="eyebrow">OPEN DECISIONS</span>
+            <h2>확정할 결정</h2>
+            <p>팀에서 합의된 항목을 체크하세요. 이 브라우저에 저장됩니다.</p>
+            <div className="progress">
+              <i
+                style={{
+                  width: `${analysis.decisions.length ? (record.confirmedDecisions.length / analysis.decisions.length) * 100 : 100}%`,
+                }}
+              />
+            </div>
+            <small>
+              {record.confirmedDecisions.length}/{analysis.decisions.length}개
+              확정
+            </small>
+            {analysis.decisions.map((item) => (
+              <label className="decision-item" key={item.id}>
+                <input
+                  type="checkbox"
+                  checked={record.confirmedDecisions.includes(item.id)}
+                  onChange={() => toggle(item.id)}
+                />
+                <span>
+                  <b>{item.question}</b>
+                  <small>
+                    {roleName(item.owner)} · {item.due}
+                  </small>
+                </span>
+              </label>
+            ))}
+            <Link
+              className={`button primary full ${!complete ? "soft" : ""}`}
+              to={`/preflight/${record.id}/receipts`}
+            >
+              {complete ? "담당자 확인으로 →" : "미결정 포함하고 계속 →"}
+            </Link>
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
+}
+function Receipts({
+  records,
+  patchRecord,
+}: {
+  records: WorkspaceRecord[];
+  patchRecord: (id: string, patch: Partial<WorkspaceRecord>) => void;
+}) {
+  const record = useRecord(records);
+  if (!record) return <Missing />;
+  const receipts = record.analysis.receiverReceipts;
+  const toggle = (role: string) =>
+    patchRecord(record.id, {
+      confirmedRoles: record.confirmedRoles.includes(role)
+        ? record.confirmedRoles.filter((x) => x !== role)
+        : [...record.confirmedRoles, role],
+    });
+  const complete =
+    receipts.length > 0 && record.confirmedRoles.length === receipts.length;
+  return (
+    <div className="page">
+      <Journey record={record} active="receipts" />
+      <div className="page-title">
+        <span className="eyebrow">RECEIVER RECEIPT</span>
+        <h1>담당자 이해 확인</h1>
+        <p>
+          각 담당자가 “내가 이해한 목표와 납품물”을 확인하면 업무 인수인계가
+          끝납니다.
+        </p>
+      </div>
+      {complete && (
+        <div className="complete-banner">
+          <span>✓</span>
+          <div>
+            <b>모든 담당자가 확인했습니다</b>
+            <p>이 업무는 공통 합의와 수신 확인을 갖춘 상태입니다.</p>
+          </div>
+        </div>
+      )}
+      <div className="receipt-grid">
+        {receipts.map((item, index) => {
+          const checked = record.confirmedRoles.includes(item.role);
+          return (
+            <article className={checked ? "confirmed" : ""} key={item.role}>
+              <div className="receipt-head">
+                <span className="avatar">{index + 1}</span>
+                <div>
+                  <h2>{roleName(item.role)}</h2>
+                  <p>이해 확신도 {item.confidence}%</p>
+                </div>
+                <span className="confidence">{item.confidence}</span>
+              </div>
+              <dl>
+                <div>
+                  <dt>내가 이해한 목표</dt>
+                  <dd>{item.understood}</dd>
+                </div>
+                <div>
+                  <dt>내가 납품할 결과</dt>
+                  <dd>{item.willDeliver}</dd>
+                </div>
+                <div className="missing">
+                  <dt>아직 필요한 정보</dt>
+                  <dd>{item.missing}</dd>
+                </div>
+              </dl>
+              <button
+                className={
+                  checked ? "confirm-button checked" : "confirm-button"
+                }
+                onClick={() => toggle(item.role)}
+              >
+                {checked ? "✓ 이해 내용 확인 완료" : "이 내용으로 이해했습니다"}
+              </button>
+            </article>
+          );
+        })}
+      </div>
+      <div className="next-panel">
+        <div>
+          <b>
+            {complete
+              ? "인수인계가 완료되었습니다"
+              : "아직 확인하지 않은 담당자가 있습니다"}
+          </b>
+          <p>
+            {complete
+              ? "분석 기록에서 언제든 합의 내용과 확인 상태를 다시 볼 수 있습니다."
+              : `${receipts.length - record.confirmedRoles.length}명의 확인이 남았습니다.`}
+          </p>
+        </div>
+        <Link className="button ghost" to="/history">
+          분석 기록 보기 →
+        </Link>
+      </div>
+    </div>
+  );
+}
+function History({ records }: { records: WorkspaceRecord[] }) {
+  const [query, setQuery] = useState("");
+  const filtered = useMemo(
+    () =>
+      records.filter((r) =>
+        `${r.request.projectName} ${r.request.mission}`
+          .toLowerCase()
+          .includes(query.toLowerCase()),
+      ),
+    [records, query],
+  );
+  return (
+    <div className="page">
+      <div className="page-title split">
+        <div>
+          <span className="eyebrow">WORK ARCHIVE</span>
+          <h1>분석 기록</h1>
+          <p>검사한 업무와 합의·확인 진행 상태를 이어서 관리하세요.</p>
+        </div>
+        <Link className="button primary" to="/preflight/new">
+          ＋ 새 업무 검사
+        </Link>
+      </div>
+      <div className="history-tools">
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="업무 이름이나 목표로 검색"
+        />
+        <span>{filtered.length}개 업무</span>
+      </div>
+      {filtered.length ? (
+        <div className="record-list large">
+          {filtered.map((record) => (
+            <RecordRow record={record} key={record.id} />
+          ))}
+        </div>
+      ) : (
+        <div className="empty-state">
+          <span>⌕</span>
+          <h3>
+            {records.length
+              ? "검색 결과가 없습니다"
+              : "아직 검사한 업무가 없습니다"}
+          </h3>
+          <p>
+            {records.length
+              ? "다른 검색어를 입력해 보세요."
+              : "새 업무 검사에서 첫 분석을 시작하세요."}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+function RecordRow({ record }: { record: WorkspaceRecord }) {
+  const progress = record.analysis.receiverReceipts.length
+    ? record.confirmedRoles.length / record.analysis.receiverReceipts.length
+    : 0;
+  return (
+    <Link className="record-row" to={`/preflight/${record.id}`}>
+      <span
+        className={`record-status ${record.analysis.verdict.toLowerCase()}`}
+      >
+        {verdictKo[record.analysis.verdict]}
+      </span>
+      <div className="record-main">
+        <h3>{record.request.projectName}</h3>
+        <p>{record.request.mission}</p>
+        <small>
+          {roleName(record.request.sourceRole)} →{" "}
+          {record.request.targetRoles.map(roleName).join(", ")}
+        </small>
+      </div>
+      <div className="record-progress">
+        <b>
+          담당자 확인 {record.confirmedRoles.length}/
+          {record.analysis.receiverReceipts.length}
+        </b>
+        <span>
+          <i style={{ width: `${progress * 100}%` }} />
+        </span>
+        <small>{formatDate(record.createdAt)}</small>
+      </div>
+      <b className="arrow">→</b>
+    </Link>
+  );
+}
+function Guide() {
+  return (
+    <div className="page guide-page">
+      <div className="page-title">
+        <span className="eyebrow">HOW IT WORKS</span>
+        <h1>Operation AI 사용 가이드</h1>
+        <p>
+          번역보다 중요한 것은 “같은 문장을 같은 업무 기준으로
+          이해했는가”입니다.
+        </p>
+      </div>
+      <div className="guide-flow">
+        {[
+          ["01", "요청 입력", "실제 업무 요청문과 참여 직무를 입력합니다."],
+          [
+            "02",
+            "의미 충돌 진단",
+            "AI가 목표·범위·제약·책임·완료 기준의 해석 차이를 찾습니다.",
+          ],
+          [
+            "03",
+            "실행 합의",
+            "모든 직무가 사용할 하나의 목표와 완료 조건을 정합니다.",
+          ],
+          [
+            "04",
+            "수신 확인",
+            "담당자가 이해한 목표·납품물·부족한 정보를 확인합니다.",
+          ],
+        ].map(([n, t, b]) => (
+          <article key={n}>
+            <span>{n}</span>
+            <h2>{t}</h2>
+            <p>{b}</p>
+          </article>
+        ))}
+      </div>
+      <section className="guide-principle">
+        <div>
+          <span className="eyebrow">CORE PRINCIPLE</span>
+          <h2>공통 계약은 ‘합의점’입니다</h2>
+        </div>
+        <p>
+          법적 계약서가 아니라, 각자 다르게 해석했던 요청을{" "}
+          <b>공통 목표·업무 범위·필수 제약·완료 기준</b>으로 다시 쓴 실행
+          문서입니다.
+        </p>
+      </section>
+      <div className="guide-columns">
+        <section>
+          <h2>이럴 때 사용하세요</h2>
+          <ul>
+            <li>기획서를 개발·디자인에 넘기기 전</li>
+            <li>해외 지사나 외부 파트너와 협업할 때</li>
+            <li>운영 정책을 여러 부서에 전달할 때</li>
+            <li>사람의 요청을 AI Agent에 위임할 때</li>
+          </ul>
+        </section>
+        <section>
+          <h2>입력하면 안 되는 정보</h2>
+          <ul>
+            <li>주민번호·전화번호 등 개인정보</li>
+            <li>고객을 식별할 수 있는 데이터</li>
+            <li>공개하면 안 되는 회사 비밀정보</li>
+            <li>권한 없이 공유하는 제3자 자료</li>
+          </ul>
+        </section>
+      </div>
+      <Link className="button primary" to="/preflight/new">
+        새 업무 검사 시작 →
+      </Link>
+    </div>
+  );
+}
+function Missing() {
+  return (
+    <div className="page">
+      <div className="empty-state">
+        <span>!</span>
+        <h2>분석 기록을 찾을 수 없습니다</h2>
+        <p>이 브라우저에 저장되지 않았거나 주소가 올바르지 않습니다.</p>
+        <Link className="button primary" to="/">
+          업무 홈으로
+        </Link>
+      </div>
+    </div>
+  );
+}
 export default App;
