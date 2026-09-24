@@ -1,6 +1,6 @@
-# Bridge X
+# Operation AI · 오퍼레이션 AI
 
-Bridge X는 서로 다른 전문 AI Agent가 하나의 프로젝트를 수행할 때 업무·권한·맥락·근거·제약·완료 조건을 관리하는 **Agent Handoff & Context Coordination** 프로토타입입니다. Agent 간 결과 충돌을 검사하고, 중요한 변경은 사람의 **Human Approval Gate**를 거쳐 다음 Agent로 전달합니다.
+Operation AI는 서로 다른 전문 AI Agent가 하나의 프로젝트를 수행할 때 업무·권한·맥락·근거·제약·완료 조건을 관리하는 **Agent Handoff & Context Coordination** 프로토타입입니다. Agent 간 결과 충돌을 검사하고, 중요한 변경은 사람의 **Human Approval Gate**를 거쳐 다음 Agent로 전달합니다.
 
 **배포 서비스:** [https://bridge-x-omega.vercel.app](https://bridge-x-omega.vercel.app)
 

@@ -1,4 +1,4 @@
-# Bridge X Backend
+# Operation AI Backend
 
 실제 백엔드는 [`apps/api`](../apps/api), Vercel 진입점은 [`api`](../api)에 있습니다.
 

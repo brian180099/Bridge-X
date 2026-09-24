@@ -1,6 +1,6 @@
-# Bridge X Project Brief
+# Operation AI Project Brief
 
-Bridge X는 회의록 서비스가 아니라 **Agent Handoff & Context Coordination** 플랫폼의 프로토타입이다. 프로젝트 목표를 입력하면 Manager Agent가 업무를 분배하고, 각 전문 Agent가 권한과 완료 조건을 포함한 **Agent Passport**와 **Structured Handoff**를 기준으로 결과를 만든다.
+Operation AI는 회의록 서비스가 아니라 **Agent Handoff & Context Coordination** 플랫폼의 프로토타입이다. 프로젝트 목표를 입력하면 Manager Agent가 업무를 분배하고, 각 전문 Agent가 권한과 완료 조건을 포함한 **Agent Passport**와 **Structured Handoff**를 기준으로 결과를 만든다.
 
 ## 사용자 흐름
 

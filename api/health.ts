@@ -7,7 +7,7 @@ export default {
 
     return Response.json({
       status: "ok",
-      service: "bridge-x-api",
+      service: "operation-ai-api",
       aiMode: provider === "openai" && hasApiKey ? "available" : "demo",
       provider,
       timestamp: new Date().toISOString(),

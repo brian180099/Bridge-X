@@ -1,4 +1,4 @@
-# Bridge X 데모 스크립트
+# Operation AI 데모 스크립트
 
 ## 0:00–0:30 · 프로젝트 목표
 
@@ -26,7 +26,7 @@ Handoff Inspector에서 goal, output, evidence, assumptions, mustKeep, canChange
 
 ## 2:50–3:00 · Evidence Capture와 결론
 
-MeetingApp의 회의 녹음·전사·분석은 선택적 Evidence Capture 계층으로 유지됨을 설명한다. Bridge X의 핵심은 회의 요약이 아니라 Agent 간 실행 맥락과 권한을 안전하게 전달하는 것이라고 마무리한다.
+MeetingApp의 회의 녹음·전사·분석은 선택적 Evidence Capture 계층으로 유지됨을 설명한다. Operation AI의 핵심은 회의 요약이 아니라 Agent 간 실행 맥락과 권한을 안전하게 전달하는 것이라고 마무리한다.
 
 ## 발표 전 체크
 
