@@ -1,0 +1,2 @@
+import { json, options, projects, runs } from "../../_orchestration.js";
+export default { async fetch(request: Request, context: { params: { id: string } }) { if (request.method === "OPTIONS") return options(); if (request.method !== "GET") return json({ error: "METHOD_NOT_ALLOWED" }, 405); const run = [...runs.values()].find(item => item.projectId === context.params.id); if (!run) return json({ error: "TIMELINE_NOT_FOUND" }, 404); return json({ project: projects.get(context.params.id), runId: run.id, status: run.status, events: run.audit }); } };

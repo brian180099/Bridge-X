@@ -1,8 +1,4 @@
-# 원티드 AI 챔피언십 제출용 문안
-
-## 서비스명
-
-**Bridge X — 회의를 실행으로 연결하는 AI 협업 워크스페이스**
+# Bridge X 제출용 문안
 
 ## 서비스 링크
 
@@ -10,77 +6,43 @@
 
 ## 한 줄 소개
 
-회의 음성을 전사하고, 직무별 할 일과 우선순위를 정리하며, 오해가 생길 표현과 도메인 용어를 원문 근거와 함께 알려주는 AI 협업 워크스페이스입니다.
+Bridge X는 서로 다른 AI Agent가 하나의 프로젝트를 수행할 때 업무·권한·맥락·근거·완료 조건을 안전하게 전달하고 충돌을 사람의 결정으로 조정하는 **Agent Handoff & Context Coordination** 프로토타입입니다.
 
 ## 문제 정의
 
-회의가 끝나도 팀원들은 같은 결론을 갖지 못합니다. PM의 ‘우선 적용’, 개발자의 ‘배포 완료’, 운영의 ‘사용 가능’은 서로 다른 조건을 의미할 수 있습니다. 글로벌 팀에서는 번역이 정확해도 직무 용어와 커뮤니케이션 관습의 차이가 남습니다. 기존 회의 요약 서비스는 내용을 줄여 주지만, 담당자·기한·완료 기준이 있는 실행 항목과 오해 가능성까지 함께 검토하는 과정은 부족합니다. 그 결과 누락, 책임 공백, 재작업이 발생합니다.
+여러 AI Agent를 연결해도 각 Agent가 이전 결과의 목적, 반드시 유지할 조건, 변경 권한과 완료 기준을 다르게 해석하면 잘못된 결과가 다음 단계로 전파됩니다. 특히 권한 밖 변경이나 근거 없는 제안이 자동 실행되면 사람이 개입해야 할 시점을 놓치게 됩니다.
 
 ## 해결 방법
 
-Bridge X는 회의 이후의 실행 정렬 과정을 한 흐름으로 제공합니다.
-
-1. 회의 음성을 녹음하거나 업로드해 전사합니다.
-2. 사용자가 전사문을 직접 확인하고 수정합니다.
-3. AI가 요약과 결정사항을 만들고, 직무별 할 일을 담당자·우선순위·기한·완료 기준으로 구조화합니다.
-4. 오해 가능성이 있는 표현과 도메인 용어를 정확한 원문 인용, 영향, 확인 질문과 함께 제시합니다.
-5. 사용자가 AI 초안을 검토 완료 상태로 확정합니다.
-6. 결과를 Notion용 Markdown과 캘린더용 ICS로 내보냅니다.
-
-## 주요 AI 도구와 활용 방식
-
-- **OpenAI 음성 전사 모델:** 브라우저에서 녹음하거나 업로드한 회의 음성을 텍스트로 변환했습니다.
-- **OpenAI Responses API:** 회의록에서 요약, 결정사항, 할 일, 모호한 표현, 용어 가이드를 생성했습니다.
-- **Structured Outputs:** 담당자·직무·우선순위·기한·완료 조건·원문 근거가 정해진 JSON 구조로 반환되도록 했습니다.
-- **Zod:** AI 응답을 서버에서 다시 검증해 UI가 예측 가능한 형식만 받도록 했습니다.
-- **Human-in-the-loop:** AI 결과를 바로 확정하지 않고 사용자가 수정·검토 완료하도록 설계했습니다.
-
-## 차별성
-
-Bridge X의 목표는 회의 내용을 더 짧게 요약하는 것이 아닙니다. **회의에서 나온 말이 직무별로 어떤 실행을 의미하는지 정렬하고, 오해 가능성과 근거를 함께 보여주는 것**이 핵심입니다.
-
-- 요약 중심이 아니라 실행 항목과 완료 기준 중심
-- 추정 결과만 보여주지 않고 실제 전사문 인용을 근거로 제공
-- 문화 차이를 단정하지 않고 확인이 필요한 맥락과 질문으로 제시
-- AI가 만든 초안과 사람이 검토한 결과를 상태로 구분
-- 다음 도구로 옮길 수 있는 Markdown·ICS 산출물 제공
+1. 프로젝트 목표와 조직 맥락, 승인자를 입력합니다.
+2. Manager Agent가 업무를 전문 Agent에 분배합니다.
+3. Agent Passport가 각 Agent의 데이터 접근·변경·금지·승인 범위를 정의합니다.
+4. 결과를 goal, output, evidence, assumptions, mustKeep, canChange, completionCriteria, openQuestions 구조의 Structured Handoff로 전달합니다.
+5. Handoff Inspector가 송신 결과와 수신 Agent의 해석 차이를 비교합니다.
+6. Conflict Detection이 숫자·일정·필수 조건·권한·근거·완료 조건을 검사합니다.
+7. 충돌 시 Human Approval Gate에서 자동 진행을 멈추고 승인·수정 요청·재검토·중단을 결정합니다.
+8. 결정 이유를 Decision Context, 다음 Handoff evidence, Audit Log에 기록합니다.
 
 ## 구현 현황
 
-배포된 웹에서 다음 기능을 실제 사용할 수 있습니다.
+- 프로젝트 목표 기반 Agent Workflow
+- Agent Passport
+- Structured Handoff와 Handoff Inspector
+- 규칙 기반 Conflict Detection
+- Human Approval Gate와 GO/REVISE/STOP 상태
+- Decision Context 및 Audit Log
+- Express 개발 API와 Vercel Functions 경로
+- API 장애 시 deterministic demo fallback
+- MeetingApp 녹음·전사·분석을 Evidence Capture로 유지
 
-- 브라우저 마이크 녹음 및 음성 파일 업로드
-- OpenAI 기반 음성 전사
-- 편집 가능한 회의 전사문
-- AI 기반 회의 분석
-- 회의별 할 일·표현·용어·요약 탭
-- 담당자·기한·우선순위·완료 조건 수정 및 검토 완료 처리
-- 전체 할 일 모아보기
-- Markdown 및 ICS 내보내기
-- 브라우저 재접속 후 회의 결과 유지
+## 현재 범위와 한계
 
-현재 데이터는 사용자 브라우저에 저장됩니다. 팀 계정, 서버 DB, 실시간 공동 편집, Notion·Google Calendar OAuth 직접 연동은 다음 단계입니다.
+현재 구현은 **내부 Agent Simulation**과 데모 세션용 in-memory 저장소를 사용하는 프로토타입입니다. 실제 외부 Agent 플랫폼 연동, 영속적인 팀 저장소, 완성된 자율 오케스트레이션이나 상용 운영 기능은 아직 제공하지 않습니다. 회의 전사 기능은 핵심 제품이 아니라 Handoff 근거를 수집하는 선택적 Evidence Capture 계층입니다.
 
 ## 기술 구성
 
 - Frontend: React, TypeScript, Vite
-- Backend: Node.js, Express, TypeScript, Zod
-- AI: OpenAI Responses API Structured Outputs, Speech-to-Text
-- Deployment: Vercel Hosting, Vercel Functions
+- Backend: Node.js, Express, TypeScript
+- API: Express + Vercel Functions
+- Deployment: Vercel
 - Test: Vitest
-
-## 기대 효과
-
-- 회의 직후 담당자·우선순위·완료 기준을 빠르게 정렬
-- 직무별 표현 차이로 인한 누락과 재작업 감소
-- 글로벌 팀의 언어 번역 이후 남는 맥락 차이 조기 확인
-- 결정과 할 일의 원문 근거 유지
-- 회의 결과를 후속 업무 도구로 옮기는 시간 절감
-
-## 300자 소개
-
-Bridge X는 회의 음성을 전사하고, 직무별 할 일·우선순위·기한·완료 기준을 구조화하며, 오해가 생길 표현과 도메인 용어를 원문 근거와 함께 보여주는 AI 협업 워크스페이스입니다. 단순 회의 요약이 아니라 서로 다른 직무와 문화권의 팀원이 같은 결론을 실행하도록 돕습니다. AI 결과는 사용자가 검토한 뒤 Markdown과 캘린더 파일로 내보낼 수 있습니다.
-
-## 30초 피치
-
-“번역이 정확하고 회의록이 있어도 팀은 서로 다르게 실행합니다. Bridge X는 회의 음성을 전사한 뒤, 각 직무가 해야 할 일을 담당자·우선순위·기한·완료 기준으로 정리합니다. ‘빠르게’, ‘우선’, ‘완료’처럼 오해가 생길 표현은 실제 발언 근거와 확인 질문으로 보여줍니다. AI가 답을 확정하는 것이 아니라 팀이 검토할 수 있는 실행 초안을 만들고, 검토한 결과를 캘린더와 업무 문서로 연결합니다.”

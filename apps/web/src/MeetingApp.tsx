@@ -57,7 +57,7 @@ export default function MeetingApp() {
     }
   };
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/meetings">
       <div className="meeting-shell">
         <aside>
           <Link className="meeting-brand" to="/">
