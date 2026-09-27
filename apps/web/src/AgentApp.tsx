@@ -13,6 +13,7 @@ import "./agent.css";
 
 const nav: { id: View; label: string; sub: string; icon: string }[] = [
   { id: "workflow", label: "협업 워크플로", sub: "WORKFLOW", icon: "⌘" },
+  { id: "gaps", label: "자투리 시간 큐", sub: "NEXT BEST WORK", icon: "◷" },
   { id: "passports", label: "에이전트 권한", sub: "PASSPORTS", icon: "▣" },
   { id: "handoffs", label: "인수인계 검사", sub: "HANDOFFS", icon: "⇄" },
   { id: "conflicts", label: "충돌 및 승인", sub: "APPROVAL", icon: "◇" },
@@ -33,8 +34,8 @@ export default function AgentApp() {
     [creating, setCreating] = useState(false),
     [mode, setMode] = useState<"api" | "demo">("demo");
   const [form, setForm] = useState({
-    name: "새 Agent 협업 프로젝트",
-    goal: "여러 전문 Agent가 함께 달성해야 할 결과를 입력하세요.",
+    name: "글로벌 리서치 협업",
+    goal: "AI가 조사하는 동안 사람이 다음 판단을 준비하고, 승인 후 결과를 안전하게 다음 Agent에게 전달합니다.",
     country: "적용 지역 또는 범위",
     organization: "담당 조직",
     finalApprover: "최종 승인자",
@@ -186,6 +187,7 @@ export default function AgentApp() {
           {view === "workflow" && (
             <Workflow project={project} run={run} go={setView} />
           )}{" "}
+          {view === "gaps" && <GapQueue project={project} run={run} />}{" "}
           {view === "passports" && <Passports />}{" "}
           {view === "handoffs" && <Handoffs handoffs={run.handoffs} />}{" "}
           {view === "conflicts" && <Conflicts run={run} decide={decide} />}{" "}
@@ -216,7 +218,7 @@ function ProgressRail({
       ? 3
       : run.status === "revision-requested"
         ? 2
-        : view === "passports"
+        : view === "passports" || view === "gaps"
           ? 0
           : Math.max(
               0,
@@ -277,13 +279,15 @@ function CreateProject({
             <em>검증 가능한 흐름</em>으로.
           </h1>
           <p>
-            목표와 승인자를 설정하면 Manager Agent가 업무를 분배하고, 모든
-            결과를 표준 Handoff와 권한 규칙으로 검사합니다.
+            목표와 승인자를 설정하면 Manager Agent가 업무를 분배합니다. AI가
+            작업하는 동안에는 다음 5·10·15분 업무를 추천하고, 모든 결과는
+            표준 Handoff와 권한 규칙으로 검사합니다.
           </p>
           <div className="trust-row">
             <span>4 Agent Passports</span>
             <span>Rule-first checks</span>
             <span>Human approval</span>
+            <span>Next best work</span>
           </div>
         </div>
         <div className="create-form">
@@ -669,6 +673,104 @@ function DynamicCollaborationPanel({
         ))}
       </div>
     </section>
+  );
+}
+
+type GapTask = {
+  id: string;
+  title: string;
+  description: string;
+  minutes: 5 | 10 | 15;
+  kind: "human" | "agent";
+  reason: string;
+  status: "ready" | "active" | "done";
+};
+
+function GapQueue({ project, run }: { project: Project; run: Run }) {
+  const [slot, setSlot] = useState<5 | 10 | 15>(10);
+  const [tasks, setTasks] = useState<GapTask[]>([
+    {
+      id: "gap-1",
+      title: "승인 기준 3개 확인",
+      description: "이번 운영안에서 반드시 지켜야 할 조건을 선택합니다.",
+      minutes: 5,
+      kind: "human",
+      reason: "현지화 Agent가 다음 단계로 넘어가기 전 사람의 판단이 필요합니다.",
+      status: "ready",
+    },
+    {
+      id: "gap-2",
+      title: "공휴일 일정 메모 정리",
+      description: "현지 운영팀의 휴일 정보를 일정 제약으로 기록합니다.",
+      minutes: 10,
+      kind: "human",
+      reason: "현재 실행 중인 리서치 결과와 바로 연결되는 짧은 입력입니다.",
+      status: "ready",
+    },
+    {
+      id: "gap-3",
+      title: "근거 문서 요약 초안 만들기",
+      description: "수신된 자료를 다음 Quality & Risk Agent가 검토할 형태로 묶습니다.",
+      minutes: 15,
+      kind: "agent",
+      reason: "AI가 대기 중인 동안 백그라운드에서 처리할 수 있습니다.",
+      status: "ready",
+    },
+  ]);
+
+  const visible = tasks.filter((task) => task.minutes <= slot && task.status !== "done");
+  const active = tasks.find((task) => task.status === "active");
+  const updateStatus = (id: string, status: GapTask["status"]) =>
+    setTasks((current) =>
+      current.map((task) => (task.id === id ? { ...task, status } : task)),
+    );
+
+  return (
+    <>
+      <SectionHead
+        eyebrow="ASYNC WORK ORCHESTRATION"
+        title="AI가 일하는 동안, 다음 일을 준비하세요"
+        body="현재 실행 중인 Agent의 대기 시간과 사용 가능한 시간을 맞춰 다음 업무를 추천합니다. 새로운 일을 무작정 추가하지 않고, 지금 프로젝트의 다음 단계만 보여줍니다."
+        tip="지금 확보된 시간을 고르고 가장 짧은 다음 업무부터 시작하세요."
+      />
+      <section className="gap-hero">
+        <div>
+          <span>ACTIVE RUN · {project.name}</span>
+          <h2>{run.currentAgent}가 결과를 준비하고 있습니다</h2>
+          <p>결과가 도착하면 현재 업무 흐름으로 자동 복귀할 수 있도록 다음 결정을 미리 준비합니다.</p>
+        </div>
+        <div className="gap-status"><i /> 백그라운드 실행 중</div>
+      </section>
+      <section className="gap-toolbar">
+        <div>
+          <small>내가 쓸 수 있는 시간</small>
+          <strong>{slot}분</strong>
+        </div>
+        <div className="slot-buttons">
+          {[5, 10, 15].map((value) => (
+            <button key={value} className={slot === value ? "active" : ""} onClick={() => setSlot(value as 5 | 10 | 15)}>
+              {value}분
+            </button>
+          ))}
+        </div>
+        <div className="gap-count"><b>{visible.length}</b>개의 다음 업무</div>
+      </section>
+      {active && (
+        <div className="active-gap"><span>진행 중</span><b>{active.title}</b><small>완료하면 다음 Agent Handoff에 입력으로 연결됩니다.</small></div>
+      )}
+      <div className="gap-grid">
+        {visible.map((task, index) => (
+          <article className={`gap-card ${task.kind}`} key={task.id}>
+            <div className="gap-card-top"><span>{task.kind === "human" ? "사람 결정" : "Agent 준비"}</span><b>{String(index + 1).padStart(2, "0")}</b></div>
+            <h2>{task.title}</h2>
+            <p>{task.description}</p>
+            <small className="gap-reason">↳ {task.reason}</small>
+            <div className="gap-card-bottom"><span>약 {task.minutes}분</span><button onClick={() => updateStatus(task.id, task.status === "active" ? "done" : "active")}>{task.status === "active" ? "완료 처리" : "시작하기 →"}</button></div>
+          </article>
+        ))}
+      </div>
+      {!visible.length && <div className="gap-empty">이 시간에 맞는 다음 업무가 없습니다. 결과가 도착하면 새로운 업무를 추천합니다.</div>}
+    </>
   );
 }
 
