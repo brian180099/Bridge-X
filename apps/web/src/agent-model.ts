@@ -1,4 +1,4 @@
-export type View = "workflow"|"passports"|"handoffs"|"conflicts"|"audit";
+export type View = "workflow"|"gaps"|"passports"|"handoffs"|"conflicts"|"audit";
 export type Decision = "keep-8"|"change-10"|"revise"|"recheck"|"stop";
 export interface Passport { id:string; name:string; organization:string; role:string; capabilities:string[]; allowedData:string[]; restrictedData:string[]; canModify:string[]; mustNotModify:string[]; approvalRequired:string[]; }
 export interface Handoff { id:string; fromAgent:string; toAgent:string; task:string; goal:string; output:string; evidence:string[]; assumptions:string[]; mustKeep:string[]; canChange:string[]; completionCriteria:string[]; openQuestions:string[]; receiverUnderstanding:string[]; receiverNeedsConfirmation:string[]; createdAt:string; }

@@ -10,6 +10,14 @@ Operation AI는 서로 다른 전문 AI Agent가 하나의 프로젝트를 수�
 
 프로젝트 목표 → Agent Passport → Manager Agent 업무 분배 → 전문 Agent 실행 → **Structured Handoff** → **Conflict Detection**·권한 검사 → **Human Approval Gate** → Decision Context 전달 → 다음 Agent 실행 → **Audit Log**
 
+## Async Work Orchestration
+
+이번 프로토타입은 에이전트가 장기 작업을 수행하는 동안 생기는 사람의 대기 시간을
+현재 프로젝트의 다음 업무로 연결하는 방향을 추가로 검증합니다. 프로젝트 실행 후
+사이드바의 **자투리 시간 큐**에서 5·10·15분 가용 시간을 선택하면, 지금 작업의 다음
+판단·입력·검토에 해당하는 업무를 추천합니다. 추천 업무는 단순한 할 일 목록이 아니라
+다음 Agent Handoff에 필요한 Human Action 또는 Agent 준비 작업으로 구분됩니다.
+
 ## 주요 기능
 
 - Agent별 접근 가능·제한 데이터, 변경 가능·금지 항목과 승인 조건을 보여주는 Agent Passport

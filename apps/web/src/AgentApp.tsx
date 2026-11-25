@@ -13,6 +13,7 @@ import "./agent.css";
 
 const nav: { id: View; label: string; sub: string; icon: string }[] = [
   { id: "workflow", label: "협업 워크플로", sub: "WORKFLOW", icon: "⌘" },
+  { id: "gaps", label: "자투리 시간 큐", sub: "NEXT BEST WORK", icon: "◷" },
   { id: "passports", label: "에이전트 권한", sub: "PASSPORTS", icon: "▣" },
   { id: "handoffs", label: "인수인계 검사", sub: "HANDOFFS", icon: "⇄" },
   { id: "conflicts", label: "충돌 및 승인", sub: "APPROVAL", icon: "◇" },
@@ -33,8 +34,8 @@ export default function AgentApp() {
     [creating, setCreating] = useState(false),
     [mode, setMode] = useState<"api" | "demo">("demo");
   const [form, setForm] = useState({
-    name: "새 Agent 협업 프로젝트",
-    goal: "여러 전문 Agent가 함께 달성해야 할 결과를 입력하세요.",
+    name: "글로벌 리서치 협업",
+    goal: "AI가 조사하는 동안 사람이 다음 판단을 준비하고, 승인 후 결과를 안전하게 다음 Agent에게 전달합니다.",
     country: "적용 지역 또는 범위",
     organization: "담당 조직",
     finalApprover: "최종 승인자",
@@ -70,8 +71,9 @@ export default function AgentApp() {
   const decide = async (decision: Decision, reason: string) => {
     if (!run || !project) return;
     let next: Run;
-    try {
-      if (mode === "demo") throw new Error();
+    if (mode === "demo") {
+      next = demoDecide(run, decision, reason, project.finalApprover);
+    } else {
       const endpoint =
         decision === "keep-8" || decision === "change-10"
           ? "approve"
@@ -87,10 +89,8 @@ export default function AgentApp() {
       });
       if (!res.ok) throw new Error();
       next = await res.json();
-    } catch {
-      next = demoDecide(run, decision, reason, project.finalApprover);
     }
-    setRun(next);
+    setRun((current) => (current?.id === run.id ? next : current));
   };
   if (!project || !run)
     return (
@@ -186,9 +186,12 @@ export default function AgentApp() {
           {view === "workflow" && (
             <Workflow project={project} run={run} go={setView} />
           )}{" "}
+          {view === "gaps" && <GapQueue project={project} run={run} />}{" "}
           {view === "passports" && <Passports />}{" "}
           {view === "handoffs" && <Handoffs handoffs={run.handoffs} />}{" "}
-          {view === "conflicts" && <Conflicts run={run} decide={decide} />}{" "}
+          <div hidden={view !== "conflicts"}>
+            <Conflicts key={run.id} run={run} decide={decide} />
+          </div>
           {view === "audit" && <Audit run={run} />}
         </div>
       </main>
@@ -216,7 +219,7 @@ function ProgressRail({
       ? 3
       : run.status === "revision-requested"
         ? 2
-        : view === "passports"
+        : view === "passports" || view === "gaps"
           ? 0
           : Math.max(
               0,
@@ -277,13 +280,15 @@ function CreateProject({
             <em>검증 가능한 흐름</em>으로.
           </h1>
           <p>
-            목표와 승인자를 설정하면 Manager Agent가 업무를 분배하고, 모든
-            결과를 표준 Handoff와 권한 규칙으로 검사합니다.
+            목표와 승인자를 설정하면 Manager Agent가 업무를 분배합니다. AI가
+            작업하는 동안에는 다음 5·10·15분 업무를 추천하고, 모든 결과는
+            표준 Handoff와 권한 규칙으로 검사합니다.
           </p>
           <div className="trust-row">
             <span>4 Agent Passports</span>
             <span>Rule-first checks</span>
             <span>Human approval</span>
+            <span>Next best work</span>
           </div>
         </div>
         <div className="create-form">
@@ -672,6 +677,120 @@ function DynamicCollaborationPanel({
   );
 }
 
+type GapTask = {
+  id: string;
+  title: string;
+  description: string;
+  minutes: 5 | 10 | 15;
+  kind: "human" | "agent";
+  reason: string;
+  status: "ready" | "active" | "done";
+};
+
+function GapQueue({ project, run }: { project: Project; run: Run }) {
+  const [slot, setSlot] = useState<5 | 10 | 15>(10);
+  const [tasks, setTasks] = useState<GapTask[]>([
+    {
+      id: "gap-1",
+      title: "승인 기준 3개 확인",
+      description: "이번 운영안에서 반드시 지켜야 할 조건을 선택합니다.",
+      minutes: 5,
+      kind: "human",
+      reason: "현지화 Agent가 다음 단계로 넘어가기 전 사람의 판단이 필요합니다.",
+      status: "ready",
+    },
+    {
+      id: "gap-2",
+      title: "공휴일 일정 메모 정리",
+      description: "현지 운영팀의 휴일 정보를 일정 제약으로 기록합니다.",
+      minutes: 10,
+      kind: "human",
+      reason: "운영안을 검토할 때 참고할 일정 제약입니다.",
+      status: "ready",
+    },
+    {
+      id: "gap-3",
+      title: "근거 문서 요약 초안 만들기",
+      description: "수신된 자료를 다음 Quality & Risk Agent가 검토할 형태로 묶습니다.",
+      minutes: 15,
+      kind: "agent",
+      reason: "다음 검토에 사용할 근거를 미리 정리하는 예시입니다.",
+      status: "ready",
+    },
+  ]);
+
+  const finished = run.status === "completed";
+  const stopped = finished && run.verdict === "STOP";
+  const revisionRequested = run.status === "revision-requested";
+  const runLabel = finished
+    ? (stopped ? "실행 중단" : "실행 완료")
+    : revisionRequested
+      ? (run.approval?.decision === "recheck" ? "담당자 재검토 요청됨" : "수정 요청됨")
+      : "승인 대기";
+  const runDescription = finished
+    ? "이 실행에 남은 추천 업무가 없습니다."
+    : revisionRequested
+      ? "담당자에게 수정 또는 재검토를 요청했습니다."
+      : `${project.finalApprover}님의 결정이 필요합니다.`;
+  const visible = tasks.filter((task) => task.minutes <= slot && task.status !== "done");
+  const active = tasks.find((task) => task.status === "active");
+  const updateStatus = (id: string, status: GapTask["status"]) =>
+    setTasks((current) =>
+      current.map((task) => (task.id === id ? { ...task, status } : task)),
+    );
+
+  return (
+    <>
+      <SectionHead
+        eyebrow="ASYNC WORK ORCHESTRATION"
+        title="자투리 시간 큐"
+        body="가용 시간에 맞는 시연용 추천 업무를 확인하세요."
+      />
+      <section className="gap-hero">
+        <div>
+          <span>{project.name}</span>
+          <h2>{runLabel}</h2>
+          <p>{runDescription}</p>
+        </div>
+        {!finished && <div className="gap-status">시연용 추천 업무</div>}
+      </section>
+      {!finished && (
+        <>
+          <section className="gap-toolbar">
+            <div>
+              <small>내가 쓸 수 있는 시간</small>
+              <strong>{slot}분</strong>
+            </div>
+            <div className="slot-buttons">
+              {([5, 10, 15] as const).map((value) => (
+                <button key={value} className={slot === value ? "active" : ""} onClick={() => setSlot(value)}>
+                  {value}분
+                </button>
+              ))}
+            </div>
+            <div className="gap-count"><b>{visible.length}</b>개의 다음 업무</div>
+          </section>
+          {active && (
+            <div className="active-gap"><span>진행 중</span><b>{active.title}</b></div>
+          )}
+          <div className="gap-grid">
+            {visible.map((task, index) => (
+              <article className={`gap-card ${task.kind}`} key={task.id}>
+                <div className="gap-card-top"><span>{task.kind === "human" ? "사람 결정" : "Agent 준비"}</span><b>{String(index + 1).padStart(2, "0")}</b></div>
+                <h2>{task.title}</h2>
+                <p>{task.description}</p>
+                <small className="gap-reason">↳ {task.reason}</small>
+                <div className="gap-card-bottom"><span>약 {task.minutes}분</span><button onClick={() => updateStatus(task.id, task.status === "active" ? "done" : "active")}>{task.status === "active" ? "완료 처리" : "시작하기 →"}</button></div>
+              </article>
+            ))}
+          </div>
+          {!visible.length && <div className="gap-empty">선택한 시간에 맞는 남은 업무가 없습니다.</div>}
+        </>
+      )}
+    </>
+  );
+}
+
 function Passports() {
   return (
     <>
@@ -877,10 +996,24 @@ function Conflicts({
   decide,
 }: {
   run: Run;
-  decide: (d: Decision, r: string) => void;
+  decide: (d: Decision, r: string) => Promise<void>;
 }) {
   const [choice, setChoice] = useState<Decision>("keep-8"),
     [reason, setReason] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
+  const saveDecision = async () => {
+    if (saving || !reason.trim()) return;
+    setSaving(true);
+    setSaveFailed(false);
+    try {
+      await decide(choice, reason);
+    } catch {
+      setSaveFailed(true);
+    } finally {
+      setSaving(false);
+    }
+  };
   const c = run.conflicts[0];
   if (run.status !== "awaiting-approval")
     return (
@@ -982,6 +1115,7 @@ function Conflicts({
             ).map((d) => (
               <button
                 className={choice === d ? "selected" : ""}
+                disabled={saving}
                 onClick={() => setChoice(d)}
                 key={d}
               >
@@ -1007,17 +1141,28 @@ function Conflicts({
             결정 이유 <b>필수</b>
             <textarea
               value={reason}
+              readOnly={saving}
               onChange={(e) => setReason(e.target.value)}
               rows={4}
               placeholder="판단 근거와 다음 Agent가 지켜야 할 조건을 입력하세요."
             />
           </label>
+          {saveFailed && (
+            <p className="approval-error" role="alert">
+              결정을 저장하지 못했습니다. 선택과 입력한 사유가 유지됩니다.
+            </p>
+          )}
           <button
             className="approve-btn"
-            disabled={!reason.trim()}
-            onClick={() => decide(choice, reason)}
+            disabled={saving || !reason.trim()}
+            onClick={saveDecision}
           >
-            결정 기록 & 다음 단계 실행 <span>→</span>
+            {saving
+              ? "저장 중…"
+              : saveFailed
+                ? "다시 시도"
+                : "결정 기록 & 다음 단계 실행"}
+            {!saving && <span>→</span>}
           </button>
         </aside>
       </div>
