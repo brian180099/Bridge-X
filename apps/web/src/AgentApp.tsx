@@ -71,8 +71,9 @@ export default function AgentApp() {
   const decide = async (decision: Decision, reason: string) => {
     if (!run || !project) return;
     let next: Run;
-    try {
-      if (mode === "demo") throw new Error();
+    if (mode === "demo") {
+      next = demoDecide(run, decision, reason, project.finalApprover);
+    } else {
       const endpoint =
         decision === "keep-8" || decision === "change-10"
           ? "approve"
@@ -88,10 +89,8 @@ export default function AgentApp() {
       });
       if (!res.ok) throw new Error();
       next = await res.json();
-    } catch {
-      next = demoDecide(run, decision, reason, project.finalApprover);
     }
-    setRun(next);
+    setRun((current) => (current?.id === run.id ? next : current));
   };
   if (!project || !run)
     return (
@@ -190,7 +189,9 @@ export default function AgentApp() {
           {view === "gaps" && <GapQueue project={project} run={run} />}{" "}
           {view === "passports" && <Passports />}{" "}
           {view === "handoffs" && <Handoffs handoffs={run.handoffs} />}{" "}
-          {view === "conflicts" && <Conflicts run={run} decide={decide} />}{" "}
+          <div hidden={view !== "conflicts"}>
+            <Conflicts key={run.id} run={run} decide={decide} />
+          </div>
           {view === "audit" && <Audit run={run} />}
         </div>
       </main>
@@ -704,7 +705,7 @@ function GapQueue({ project, run }: { project: Project; run: Run }) {
       description: "현지 운영팀의 휴일 정보를 일정 제약으로 기록합니다.",
       minutes: 10,
       kind: "human",
-      reason: "현재 실행 중인 리서치 결과와 바로 연결되는 짧은 입력입니다.",
+      reason: "운영안을 검토할 때 참고할 일정 제약입니다.",
       status: "ready",
     },
     {
@@ -713,11 +714,24 @@ function GapQueue({ project, run }: { project: Project; run: Run }) {
       description: "수신된 자료를 다음 Quality & Risk Agent가 검토할 형태로 묶습니다.",
       minutes: 15,
       kind: "agent",
-      reason: "AI가 대기 중인 동안 백그라운드에서 처리할 수 있습니다.",
+      reason: "다음 검토에 사용할 근거를 미리 정리하는 예시입니다.",
       status: "ready",
     },
   ]);
 
+  const finished = run.status === "completed";
+  const stopped = finished && run.verdict === "STOP";
+  const revisionRequested = run.status === "revision-requested";
+  const runLabel = finished
+    ? (stopped ? "실행 중단" : "실행 완료")
+    : revisionRequested
+      ? (run.approval?.decision === "recheck" ? "담당자 재검토 요청됨" : "수정 요청됨")
+      : "승인 대기";
+  const runDescription = finished
+    ? "이 실행에 남은 추천 업무가 없습니다."
+    : revisionRequested
+      ? "담당자에게 수정 또는 재검토를 요청했습니다."
+      : `${project.finalApprover}님의 결정이 필요합니다.`;
   const visible = tasks.filter((task) => task.minutes <= slot && task.status !== "done");
   const active = tasks.find((task) => task.status === "active");
   const updateStatus = (id: string, status: GapTask["status"]) =>
@@ -729,47 +743,50 @@ function GapQueue({ project, run }: { project: Project; run: Run }) {
     <>
       <SectionHead
         eyebrow="ASYNC WORK ORCHESTRATION"
-        title="AI가 일하는 동안, 다음 일을 준비하세요"
-        body="현재 실행 중인 Agent의 대기 시간과 사용 가능한 시간을 맞춰 다음 업무를 추천합니다. 새로운 일을 무작정 추가하지 않고, 지금 프로젝트의 다음 단계만 보여줍니다."
-        tip="지금 확보된 시간을 고르고 가장 짧은 다음 업무부터 시작하세요."
+        title="자투리 시간 큐"
+        body="가용 시간에 맞는 시연용 추천 업무를 확인하세요."
       />
       <section className="gap-hero">
         <div>
-          <span>ACTIVE RUN · {project.name}</span>
-          <h2>{run.currentAgent}가 결과를 준비하고 있습니다</h2>
-          <p>결과가 도착하면 현재 업무 흐름으로 자동 복귀할 수 있도록 다음 결정을 미리 준비합니다.</p>
+          <span>{project.name}</span>
+          <h2>{runLabel}</h2>
+          <p>{runDescription}</p>
         </div>
-        <div className="gap-status"><i /> 백그라운드 실행 중</div>
+        {!finished && <div className="gap-status">시연용 추천 업무</div>}
       </section>
-      <section className="gap-toolbar">
-        <div>
-          <small>내가 쓸 수 있는 시간</small>
-          <strong>{slot}분</strong>
-        </div>
-        <div className="slot-buttons">
-          {[5, 10, 15].map((value) => (
-            <button key={value} className={slot === value ? "active" : ""} onClick={() => setSlot(value as 5 | 10 | 15)}>
-              {value}분
-            </button>
-          ))}
-        </div>
-        <div className="gap-count"><b>{visible.length}</b>개의 다음 업무</div>
-      </section>
-      {active && (
-        <div className="active-gap"><span>진행 중</span><b>{active.title}</b><small>완료하면 다음 Agent Handoff에 입력으로 연결됩니다.</small></div>
+      {!finished && (
+        <>
+          <section className="gap-toolbar">
+            <div>
+              <small>내가 쓸 수 있는 시간</small>
+              <strong>{slot}분</strong>
+            </div>
+            <div className="slot-buttons">
+              {([5, 10, 15] as const).map((value) => (
+                <button key={value} className={slot === value ? "active" : ""} onClick={() => setSlot(value)}>
+                  {value}분
+                </button>
+              ))}
+            </div>
+            <div className="gap-count"><b>{visible.length}</b>개의 다음 업무</div>
+          </section>
+          {active && (
+            <div className="active-gap"><span>진행 중</span><b>{active.title}</b></div>
+          )}
+          <div className="gap-grid">
+            {visible.map((task, index) => (
+              <article className={`gap-card ${task.kind}`} key={task.id}>
+                <div className="gap-card-top"><span>{task.kind === "human" ? "사람 결정" : "Agent 준비"}</span><b>{String(index + 1).padStart(2, "0")}</b></div>
+                <h2>{task.title}</h2>
+                <p>{task.description}</p>
+                <small className="gap-reason">↳ {task.reason}</small>
+                <div className="gap-card-bottom"><span>약 {task.minutes}분</span><button onClick={() => updateStatus(task.id, task.status === "active" ? "done" : "active")}>{task.status === "active" ? "완료 처리" : "시작하기 →"}</button></div>
+              </article>
+            ))}
+          </div>
+          {!visible.length && <div className="gap-empty">선택한 시간에 맞는 남은 업무가 없습니다.</div>}
+        </>
       )}
-      <div className="gap-grid">
-        {visible.map((task, index) => (
-          <article className={`gap-card ${task.kind}`} key={task.id}>
-            <div className="gap-card-top"><span>{task.kind === "human" ? "사람 결정" : "Agent 준비"}</span><b>{String(index + 1).padStart(2, "0")}</b></div>
-            <h2>{task.title}</h2>
-            <p>{task.description}</p>
-            <small className="gap-reason">↳ {task.reason}</small>
-            <div className="gap-card-bottom"><span>약 {task.minutes}분</span><button onClick={() => updateStatus(task.id, task.status === "active" ? "done" : "active")}>{task.status === "active" ? "완료 처리" : "시작하기 →"}</button></div>
-          </article>
-        ))}
-      </div>
-      {!visible.length && <div className="gap-empty">이 시간에 맞는 다음 업무가 없습니다. 결과가 도착하면 새로운 업무를 추천합니다.</div>}
     </>
   );
 }
@@ -979,10 +996,24 @@ function Conflicts({
   decide,
 }: {
   run: Run;
-  decide: (d: Decision, r: string) => void;
+  decide: (d: Decision, r: string) => Promise<void>;
 }) {
   const [choice, setChoice] = useState<Decision>("keep-8"),
     [reason, setReason] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
+  const saveDecision = async () => {
+    if (saving || !reason.trim()) return;
+    setSaving(true);
+    setSaveFailed(false);
+    try {
+      await decide(choice, reason);
+    } catch {
+      setSaveFailed(true);
+    } finally {
+      setSaving(false);
+    }
+  };
   const c = run.conflicts[0];
   if (run.status !== "awaiting-approval")
     return (
@@ -1084,6 +1115,7 @@ function Conflicts({
             ).map((d) => (
               <button
                 className={choice === d ? "selected" : ""}
+                disabled={saving}
                 onClick={() => setChoice(d)}
                 key={d}
               >
@@ -1109,17 +1141,28 @@ function Conflicts({
             결정 이유 <b>필수</b>
             <textarea
               value={reason}
+              readOnly={saving}
               onChange={(e) => setReason(e.target.value)}
               rows={4}
               placeholder="판단 근거와 다음 Agent가 지켜야 할 조건을 입력하세요."
             />
           </label>
+          {saveFailed && (
+            <p className="approval-error" role="alert">
+              결정을 저장하지 못했습니다. 선택과 입력한 사유가 유지됩니다.
+            </p>
+          )}
           <button
             className="approve-btn"
-            disabled={!reason.trim()}
-            onClick={() => decide(choice, reason)}
+            disabled={saving || !reason.trim()}
+            onClick={saveDecision}
           >
-            결정 기록 & 다음 단계 실행 <span>→</span>
+            {saving
+              ? "저장 중…"
+              : saveFailed
+                ? "다시 시도"
+                : "결정 기록 & 다음 단계 실행"}
+            {!saving && <span>→</span>}
           </button>
         </aside>
       </div>
